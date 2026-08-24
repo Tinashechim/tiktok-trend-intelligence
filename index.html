@@ -60,6 +60,22 @@
     <div class="main-container">
         <div id="dashboard" class="page active">
             <div class="page-header"><h1>Trending Now</h1></div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+                <span style="font-weight:bold;color:#333;">📍 Region:</span>
+                <select id="dashboard-region-select" class="form-control" style="max-width:220px;display:inline-block;"></select>
+                <button class="btn btn-primary" onclick="loadDashboardLocationTrends()">Show My Trends</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">Local Trends</h3>
+                    <div id="local-trends-dashboard" class="trends-grid"></div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">International Trends</h3>
+                    <div id="international-trends-dashboard" class="trends-grid"></div>
+                </div>
+            </div>
+            <h3 style="margin-bottom:0.5rem;">All Trends</h3>
             <div id="trends-container" class="trends-grid"><div class="loading">Loading...</div></div>
         </div>
         <div id="locations" class="page">
@@ -152,6 +168,7 @@
                 document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
                 if (page === "dashboard") loadTrends();
+        loadDashboardRegions();
                 if (page === "movements") loadMovements();
                 if (page === "locations") loadRegions();
                 if (page === "analytics") loadAnalytics();
@@ -199,6 +216,7 @@
             else { savedTrends.push(id); showToast("Saved","success"); }
             localStorage.setItem("savedTrends", JSON.stringify(savedTrends));
             loadTrends();
+        loadDashboardRegions();
         }
 
         function loadMovements() {
@@ -332,7 +350,8 @@
             var trend = {trend_name: document.getElementById("trend-name").value, trend_type: document.getElementById("trend-type").value, video_count: parseInt(document.getElementById("video-count").value||"0"), growth_rate: parseFloat(document.getElementById("growth-rate").value||"0")};
             fetch(API_URL + "/admin/trends", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(trend)})
                 .then(function(r){ return r.json(); })
-                .then(function(){ showToast("Trend added!","success"); loadTrends(); })
+                .then(function(){ showToast("Trend added!","success"); loadTrends();
+        loadDashboardRegions(); })
                 .catch(function(){ showToast("Error","error"); });
         }
 
@@ -340,7 +359,8 @@
             showToast("Refreshing...","success");
             fetch(API_URL + "/refresh", {method:"POST"})
                 .then(function(r){ return r.json(); })
-                .then(function(d){ showToast("Updated " + d.count + " trends","success"); loadTrends(); })
+                .then(function(d){ showToast("Updated " + d.count + " trends","success"); loadTrends();
+        loadDashboardRegions(); })
                 .catch(function(){ showToast("Refresh failed","error"); });
         }
 
@@ -564,6 +584,52 @@
                 });
         }
         
+        function loadDashboardRegions() {
+            var select = document.getElementById("dashboard-region-select");
+            fetch(API_URL + "/trends/regions").then(function(r){return r.json();}).then(function(d){
+                select.innerHTML = "";
+                d.regions.forEach(function(region){
+                    select.innerHTML += '<option value="' + region + '">' + region + '</option>';
+                });
+                // Try to auto-detect from browser language
+                var lang = navigator.language || navigator.userLanguage;
+                var country = "United States";
+                if (lang.indexOf("GB") >= 0) country = "United Kingdom";
+                else if (lang.indexOf("ZA") >= 0) country = "South Africa";
+                else if (lang.indexOf("NG") >= 0) country = "Nigeria";
+                else if (lang.indexOf("KE") >= 0) country = "Kenya";
+                else if (lang.indexOf("IN") >= 0) country = "India";
+                else if (lang.indexOf("CA") >= 0) country = "Canada";
+                else if (lang.indexOf("AU") >= 0) country = "Australia";
+                else if (lang.indexOf("BR") >= 0) country = "Brazil";
+                else if (lang.indexOf("DE") >= 0) country = "Germany";
+                else if (lang.indexOf("FR") >= 0) country = "France";
+                select.value = country;
+                loadDashboardLocationTrends();
+            });
+        }
+        
+        function loadDashboardLocationTrends() {
+            var region = document.getElementById("dashboard-region-select").value;
+            if (!region) return;
+            fetch(API_URL + "/trends/by-region?region=" + encodeURIComponent(region))
+                .then(function(r){return r.json();})
+                .then(function(d){
+                    var localC = document.getElementById("local-trends-dashboard");
+                    var intlC = document.getElementById("international-trends-dashboard");
+                    localC.innerHTML = "";
+                    intlC.innerHTML = "";
+                    
+                    d.local_trends.forEach(function(t){
+                        localC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                    
+                    d.international_trends.forEach(function(t){
+                        intlC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                });
+        }
+        
         function showToast(msg, type) {
             var toast = document.createElement("div");
             toast.className = "toast " + type;
@@ -574,6 +640,7 @@
 
         // initial load
         loadTrends();
+        loadDashboardRegions();
     </script>
 </body>
 </html>
