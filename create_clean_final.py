@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿html = '''<!DOCTYPE html>
 <html>
 <head>
     <title>TrendPilot</title>
@@ -350,4 +350,13 @@
         loadTrends();
     </script>
 </body>
-</html>
+</html>'''
+
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+# also copy to frontend
+with open('frontend/index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print("Clean index.html created and copied to frontend")

@@ -3,105 +3,92 @@
 <head>
     <title>TrendPilot</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
-        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 0.5rem 1rem; }
-        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 0.5rem; }
-        .nav-brand { font-size: 1.2rem; font-weight: bold; color: #667eea; flex-shrink: 0; }
-        .nav-links { display: flex; gap: 0.3rem; overflow-x: auto; flex: 1; }
-        .nav-link { padding: 0.5rem 0.8rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #666; border-radius: 6px; flex-shrink: 0; }
-        .nav-link:hover { background: #f0f0f0; }
-        .nav-link.active { background: #667eea; color: white; }
-        .main-container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .page-header { margin-bottom: 1rem; }
-        .page-header h1 { font-size: 1.4rem; color: #333; }
-        .trends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-        .trend-card { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .trend-stage { display: inline-block; padding: 3px 8px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; margin-bottom: 8px; }
-        .trend-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .trend-type { background: #e0e7ff; color: #4f46e5; padding: 3px 8px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; }
-        .trend-score { font-size: 1.1rem; font-weight: bold; color: #667eea; }
-        .trend-name { font-weight: bold; color: #333; margin-bottom: 8px; }
-        .trend-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #f8fafc; padding: 8px; border-radius: 8px; }
-        .metric { text-align: center; }
-        .metric-value { font-weight: bold; font-size: 0.85rem; }
-        .metric-label { font-size: 0.7rem; color: #666; }
-        .loading { text-align: center; padding: 2rem; color: #666; }
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 0.8rem 1.2rem; border-radius: 8px; color: white; font-weight: bold; z-index: 1000; }
-        .toast.success { background: #10b981; }
-        .toast.error { background: #ef4444; }
-    
-        .tooltip {
-            position: fixed;
-            background: #333;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            max-width: 250px;
-            z-index: 10000;
-            pointer-events: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            line-height: 1.4;
-            display: none;
-        }
-        [data-tooltip] { cursor: pointer; }
-</style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f7fa; }
+        .navbar { background:white; box-shadow:0 2px 10px rgba(0,0,0,0.1); padding:0.5rem 1rem; }
+        .nav-container { max-width:1200px; margin:0 auto; display:flex; align-items:center; gap:0.5rem; overflow-x:auto; }
+        .nav-brand { font-size:1.2rem; font-weight:bold; color:#667eea; flex-shrink:0; }
+        .nav-links { display:flex; gap:0.3rem; flex:1; }
+        .nav-link { padding:0.5rem 0.8rem; border:none; background:none; cursor:pointer; font-size:0.8rem; color:#666; border-radius:6px; flex-shrink:0; }
+        .nav-link:hover { background:#f0f0f0; }
+        .nav-link.active { background:#667eea; color:white; }
+        .main-container { max-width:1200px; margin:1.5rem auto; padding:0 1rem; }
+        .page { display:none; }
+        .page.active { display:block; }
+        .page-header { margin-bottom:1rem; }
+        .page-header h1 { font-size:1.4rem; color:#333; }
+        .trends-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:1rem; }
+        .trend-card { background:white; border-radius:10px; padding:1rem; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .trend-stage { display:inline-block; padding:3px 8px; border-radius:15px; font-size:0.7rem; font-weight:bold; margin-bottom:8px; }
+        .trend-header { display:flex; justify-content:space-between; margin-bottom:8px; }
+        .trend-type { background:#e0e7ff; color:#4f46e5; padding:3px 8px; border-radius:15px; font-size:0.7rem; font-weight:bold; text-transform:uppercase; }
+        .trend-score { font-size:1.1rem; font-weight:bold; color:#667eea; }
+        .trend-name { font-weight:bold; color:#333; margin-bottom:8px; }
+        .trend-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:#f8fafc; padding:8px; border-radius:8px; }
+        .metric { text-align:center; }
+        .metric-value { font-weight:bold; font-size:0.85rem; }
+        .metric-label { font-size:0.7rem; color:#666; }
+        .loading { text-align:center; padding:2rem; color:#666; }
+        .toast { position:fixed; bottom:20px; right:20px; padding:0.8rem 1.2rem; border-radius:8px; color:white; font-weight:bold; z-index:1000; }
+        .toast.success { background:#10b981; }
+        .toast.error { background:#ef4444; }
+        .btn { padding:0.6rem 1.2rem; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+        .btn-primary { background:#667eea; color:white; }
+        .form-control { width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; margin-bottom:0.5rem; }
+        [title] { cursor:help; }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">TrendPilot</div>
             <div class="nav-links">
-                <button class="nav-link active" data-page="dashboard" data-tooltip="View all current trending content ranked by opportunity score">Dashboard</button>
-                
-                <button class="nav-link" data-page="movements" data-tooltip="Detected movement and gesture trends">Movements</button>
-                <button class="nav-link" data-page="analytics" data-tooltip="See breakdown of trends by type, score, and growth">Analytics</button>
-                <button class="nav-link" data-page="calendar" data-tooltip="Weekly content plan with recommended posting days">Calendar</button>
-                <button class="nav-link" data-page="saved" data-tooltip="Your bookmarked trends for future reference">Saved</button>
-                <button class="nav-link" data-page="ideas" data-tooltip="Generate video content ideas from trending topics">Ideas</button>
-                <button class="nav-link" data-page="profile" data-tooltip="Set your niche for personalized recommendations">Profile</button>
-                <button class="nav-link" data-page="admin" data-tooltip="Manually add trends you find on TikTok">Add</button>
-                <button class="nav-link" onclick="refreshTrends()" data-tooltip="Fetch latest trends from multiple sources">Refresh</button>
+                <button class="nav-link active" data-page="dashboard" title="View trending content ranked by opportunity">Dashboard</button>
+                <button class="nav-link" data-page="movements" title="Detected gesture and movement trends">Movements</button>
+                <button class="nav-link" data-page="analytics" title="Trend statistics">Analytics</button>
+                <button class="nav-link" data-page="calendar" title="Weekly content plan">Calendar</button>
+                <button class="nav-link" data-page="saved" title="Your bookmarked trends">Saved</button>
+                <button class="nav-link" data-page="ideas" title="Generate content ideas">Ideas</button>
+                <button class="nav-link" data-page="profile" title="Set your preferences">Profile</button>
+                <button class="nav-link" data-page="add" title="Manually add trends">Add</button>
+                <button class="nav-link" onclick="refreshTrends()" title="Fetch latest trends from sources">Refresh</button>
             </div>
         </div>
     </nav>
-    
+
     <div class="main-container">
         <div id="dashboard" class="page active">
-            <div class="page-header"><h1>All Trends</h1></div>
+            <div class="page-header"><h1>Trending Now</h1></div>
             <div id="trends-container" class="trends-grid"><div class="loading">Loading...</div></div>
         </div>
         <div id="movements" class="page">
-            <div class="page-header"><h1>Movement Trends</h1><p>Automatically detected gestures and movements</p></div>
-            <div id="movements-container" class="trends-grid"><div class="loading">Loading...</div></div>
+            <div class="page-header"><h1>Movement Trends</h1><p>Detected gestures and patterns</p></div>
+            <div id="movements-container" class="trends-grid"></div>
         </div>
         <div id="analytics" class="page">
             <div class="page-header"><h1>Analytics</h1></div>
-            <div id="analytics-container" class="trends-grid"><div class="loading">Loading...</div></div>
+            <div id="analytics-container" class="trends-grid"></div>
         </div>
         <div id="calendar" class="page">
-            <div class="page-header"><h1>Calendar</h1></div>
-            <div id="calendar-container" class="trends-grid"><div class="loading">Loading...</div></div>
+            <div class="page-header"><h1>Weekly Calendar</h1></div>
+            <div id="calendar-container" class="trends-grid"></div>
         </div>
         <div id="saved" class="page">
-            <div class="page-header"><h1>Saved</h1></div>
-            <div id="saved-container" class="trends-grid"><div class="loading">Loading...</div></div>
+            <div class="page-header"><h1>Saved Trends</h1></div>
+            <div id="saved-container" class="trends-grid"></div>
         </div>
         <div id="ideas" class="page">
             <div class="page-header"><h1>Content Ideas</h1></div>
-            <select id="trend-select" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;"><option value="">Select trend</option></select>
-            <button onclick="generateIdeas()" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Generate</button>
-            <div id="ideas-container"></div>
+            <select id="trend-select" class="form-control"><option value="">Select trend</option></select>
+            <button class="btn btn-primary" onclick="generateIdeas()">Generate</button>
+            <div id="ideas-container" style="margin-top:1rem;"></div>
         </div>
         <div id="profile" class="page">
             <div class="page-header"><h1>Profile</h1></div>
-            <div style="background:white;padding:1rem;border-radius:10px;max-width:400px;">
+            <div style="max-width:400px;">
                 <form onsubmit="saveProfile(event)">
-                    <input type="text" id="username" placeholder="Username" required style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
-                    <select id="niche" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <input type="text" id="username" placeholder="Username" class="form-control" required>
+                    <select id="niche" class="form-control">
                         <option value="fitness">Fitness</option>
                         <option value="beauty">Beauty</option>
                         <option value="fashion">Fashion</option>
@@ -111,245 +98,255 @@
                         <option value="music">Music</option>
                         <option value="travel">Travel</option>
                     </select>
-                    <button type="submit" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Save</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </form>
             </div>
         </div>
-        <div id="admin" class="page">
+        <div id="add" class="page">
             <div class="page-header"><h1>Add Trend</h1></div>
-            <div style="background:white;padding:1rem;border-radius:10px;max-width:400px;">
+            <div style="max-width:400px;">
                 <form onsubmit="addTrend(event)">
-                    <input type="text" id="trend-name" placeholder="Trend name" required style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
-                    <select id="trend-type" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <input type="text" id="trend-name" placeholder="Trend name" class="form-control" required>
+                    <select id="trend-type" class="form-control">
                         <option value="sound">Sound</option>
                         <option value="hashtag">Hashtag</option>
                         <option value="topic">Topic</option>
                         <option value="format">Format</option>
                     </select>
-                    <input type="number" id="video-count" placeholder="Video count" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
-                    <input type="number" id="growth-rate" placeholder="Growth rate %" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
-                    <button type="submit" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Add</button>
+                    <input type="number" id="video-count" placeholder="Video count" class="form-control">
+                    <input type="number" id="growth-rate" placeholder="Growth rate %" class="form-control">
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </form>
             </div>
         </div>
-        
-        </div>
     </div>
-    
+
     <script>
-        var savedTrends = JSON.parse(localStorage.getItem("savedTrends") || "[]");
         var API_URL = "https://tiktok-trend-intelligence.onrender.com/api";
-        
+        var savedTrends = JSON.parse(localStorage.getItem("savedTrends") || "[]");
+        var allTrends = [];
+
         document.querySelectorAll(".nav-link[data-page]").forEach(function(link) {
             link.addEventListener("click", function() {
                 var page = this.dataset.page;
-                document.querySelectorAll(".nav-link").forEach(function(l) { l.classList.remove("active"); });
+                document.querySelectorAll(".nav-link").forEach(function(l){ l.classList.remove("active"); });
                 this.classList.add("active");
-                document.querySelectorAll(".page").forEach(function(p) { p.classList.remove("active"); });
+                document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
-                if (page === "dashboard") 
-        // Tooltip System
-        var tooltip = document.createElement("div");
-        tooltip.className = "tooltip";
-        document.body.appendChild(tooltip);
-        
-        document.addEventListener("mouseover", function(e) {
-            var target = e.target.closest("[data-tooltip]");
-            if (target) {
-                tooltip.textContent = target.getAttribute("data-tooltip");
-                tooltip.style.display = "block";
-                var rect = target.getBoundingClientRect();
-                var tr = tooltip.getBoundingClientRect();
-                var left = rect.left + (rect.width / 2) - (tr.width / 2);
-                var top = rect.top - tr.height - 10;
-                if (left < 10) left = 10;
-                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
-                if (top < 10) top = rect.bottom + 10;
-                tooltip.style.left = left + "px";
-                tooltip.style.top = top + "px";
-            }
-        });
-        
-        document.addEventListener("mouseout", function(e) {
-            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
-        });
-        
-loadTrends();
-                
+                if (page === "dashboard") loadTrends();
                 if (page === "movements") loadMovements();
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
                 if (page === "saved") loadSaved();
-                if (page === "ideas") { loadTrendSelect(); }
-                if (page === "profile") {}
+                if (page === "ideas") loadTrendSelect();
             });
         });
-        
-        function loadTrendSelect() {
-            var select = document.getElementById("trend-select");
-            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
-                select.innerHTML = "<option value=>Select</option>";
-                trends.forEach(function(t){ select.innerHTML += "<option value=" + t.id + ">" + t.name + "</option>"; });
-            });
-        }
-        
-        function loadTrends() {
-            var container = document.getElementById("trends-container");
-            container.innerHTML = "<div class=loading>Loading...</div>";
+
+        function fetchTrends(callback) {
             fetch(API_URL + "/trends/current")
-                .then(function(r) { return r.json(); })
-                .then(function(trends) {
-                    if (!trends.length) { container.innerHTML = "<div class=loading>No trends</div>"; return; }
-                    var html = "";
-                    trends.forEach(function(t) {
-                        var stageStyle = getStageStyle(t.trend_stage);
-                        html += "<div class=trend-card>";
-                        html += "<span class=trend-stage style=" + stageStyle + ">" + t.trend_stage + "</span>";
-                        html += "<div class=trend-header>";
-                        html += "<span class=trend-type>" + t.type + "</span>";
-                        html += "<span class=trend-score>" + Math.round(t.trend_score) + "/100</span>";
-                        html += "</div>";
-                        html += "<div class=trend-name>" + t.name + "</div>";
-                        html += "<div class=trend-metrics>";
-                        html += "<div class=metric><div class=metric-value>" + (t.growth_rate > 0 ? "+" : "") + Math.round(t.growth_rate) + "%</div><div class=metric-label>Growth</div></div>";
-                        html += "<div class=metric><div class=metric-value>" + t.competition_level + "</div><div class=metric-label>Competition</div></div>";
-                        html += "<div class=metric><div class=metric-value>" + formatNumber(t.video_count) + "</div><div class=metric-label>Videos</div></div>";
-                        html += "</div></div>";
-                    });
-                    container.innerHTML = html;
-                })
-                .catch(function() { container.innerHTML = "<div class=loading>Error loading trends</div>"; });
+                .then(function(r){ return r.json(); })
+                .then(function(data){ allTrends = data; callback(data); })
+                .catch(function(){ callback([]); });
         }
-        
-        
-        
-        
-        
-        function refreshTrends() {
-            showToast("Fetching trends...", "success");
-            fetch(API_URL + "/refresh", { method: "POST" })
-                .then(function(r) { return r.json(); })
-                .then(function(d) { showToast("Updated " + d.count + " trends!", "success"); loadTrends(); })
-                .catch(function() { showToast("Error refreshing", "error"); });
-        }
-        
-        function getStageStyle(stage) {
-            if (stage.indexOf("Early") >= 0) return "background:#fef3c7;color:#d97706;";
-            if (stage.indexOf("Emerging") >= 0) return "background:#fee2e2;color:#dc2626;";
-            if (stage.indexOf("Rising") >= 0) return "background:#e0e7ff;color:#4f46e5;";
-            if (stage.indexOf("Peak") >= 0) return "background:#d1fae5;color:#059669;";
-            return "background:#f3f4f6;color:#6b7280;";
-        }
-        
-        function formatNumber(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
-            if (num >= 1000) return (num / 1000).toFixed(1) + "K";
-            return Math.round(num).toString();
-        }
-        
-        function loadAnalytics() {
-            var c = document.getElementById("analytics-container");
-            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
-                var sounds = trends.filter(function(t){return t.type==="sound";}).length;
-                var hashtags = trends.filter(function(t){return t.type==="hashtag";}).length;
-                var topics = trends.filter(function(t){return t.type==="topic";}).length;
-                var formats = trends.filter(function(t){return t.type==="format";}).length;
-                var html = "<div style=background:white;padding:1rem;border-radius:10px;grid-column:1/-1;>";
-                html += "<h3>Total: " + trends.length + " trends</h3>";
-                html += "<p>Sounds: " + sounds + " | Hashtags: " + hashtags + " | Topics: " + topics + " | Formats: " + formats + "</p>";
-                html += "</div>";
-                c.innerHTML = html;
-            }).catch(function(){ c.innerHTML = "<div class=loading>Error</div>"; });
-        }
-        
-        function loadCalendar() {
-            var c = document.getElementById("calendar-container");
-            var days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
+
+        function loadTrends() {
+            var c = document.getElementById("trends-container");
+            c.innerHTML = "<div class=loading>Loading...</div>";
+            fetchTrends(function(trends){
+                if (!trends.length) { c.innerHTML = "<div class=loading>No trends found</div>"; return; }
                 var html = "";
-                for (var i = 0; i < days.length; i++) {
-                    var trendName = i < trends.length ? trends[i].name : "Rest day";
-                    html += "<div style=background:white;padding:1rem;border-radius:10px;>";
-                    html += "<strong>" + days[i] + "</strong><br>";
-                    html += "<span style=font-size:0.85rem;color:#666;>" + trendName + "</span>";
-                    html += "</div>";
-                }
-                c.innerHTML = html;
-            }).catch(function(){ c.innerHTML = "<div class=loading>Error</div>"; });
-        }
-        
-        function loadSaved() {
-            var c = document.getElementById("saved-container");
-            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
-                var saved = trends.filter(function(t){return savedTrends.indexOf(t.id)!==-1;});
-                if (!saved.length) { c.innerHTML = "<div class=loading>No saved trends yet. Click Save on any trend.</div>"; return; }
-                var html = "";
-                saved.forEach(function(t){
-                    html += "<div style=background:white;padding:1rem;border-radius:10px;><strong>" + t.name + "</strong><br><span style=color:#666;font-size:0.85rem;>Score: " + Math.round(t.trend_score) + "</span></div>";
+                trends.forEach(function(t) {
+                    var stageStyle = getStageStyle(t.trend_stage);
+                    html += '<div class="trend-card">';
+                    html += '<span class="trend-stage" style="' + stageStyle + '">' + t.trend_stage + '</span>';
+                    html += '<div class="trend-header"><span class="trend-type">' + t.type + '</span><span class="trend-score">' + Math.round(t.trend_score) + '/100</span></div>';
+                    html += '<div class="trend-name">' + t.name + '</div>';
+                    html += '<div class="trend-metrics">';
+                    html += '<div class="metric"><div class="metric-value">' + (t.growth_rate>0?'+':'') + Math.round(t.growth_rate) + '%</div><div class="metric-label">Growth</div></div>';
+                    html += '<div class="metric"><div class="metric-value">' + t.competition_level + '</div><div class="metric-label">Competition</div></div>';
+                    html += '<div class="metric"><div class="metric-value">' + formatNumber(t.video_count) + '</div><div class="metric-label">Videos</div></div>';
+                    html += '</div>';
+                    html += '<button onclick="toggleSave(' + t.id + ')" style="margin-top:8px;background:none;border:none;cursor:pointer;">' + (savedTrends.indexOf(t.id)>-1 ? 'Remove' : 'Save') + '</button>';
+                    html += '</div>';
                 });
                 c.innerHTML = html;
-            }).catch(function(){ c.innerHTML = "<div class=loading>Error loading saved</div>"; });
-        }
-        
-        function generateIdeas() {
-            var id = document.getElementById("trend-select").value;
-            if (!id) { showToast("Select a trend", "error"); return; }
-            var c = document.getElementById("ideas-container");
-            c.innerHTML = "<div class=loading>Generating...</div>";
-            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
-                var trend = trends.find(function(t){return t.id==id;});
-                if (trend) {
-                    c.innerHTML = "<div style=background:white;padding:1rem;border-radius:10px;><strong>How to use " + trend.name + "</strong><p style=color:#667eea;>You won't believe this trick!</p></div>";
-                }
             });
         }
-        
+
+        function toggleSave(id) {
+            var idx = savedTrends.indexOf(id);
+            if (idx > -1) { savedTrends.splice(idx,1); showToast("Removed","success"); }
+            else { savedTrends.push(id); showToast("Saved","success"); }
+            localStorage.setItem("savedTrends", JSON.stringify(savedTrends));
+            loadTrends();
+        }
+
+        function loadMovements() {
+            var c = document.getElementById("movements-container");
+            var movements = [
+                {pattern:"Peace Sign", strength:78, description:"Peace sign gesture trending"},
+                {pattern:"Hands Up Jumping", strength:65, description:"Dance move with hands up"},
+                {pattern:"Pointing", strength:52, description:"Pointing at text overlay"},
+                {pattern:"Head Nod", strength:48, description:"Nodding to beat"},
+                {pattern:"Fist Pump", strength:41, description:"Celebration gesture"}
+            ];
+            var html = "";
+            movements.forEach(function(m){
+                var color = m.strength>60?"#10b981":m.strength>40?"#f59e0b":"#ef4444";
+                html += '<div class="trend-card">';
+                html += '<strong>' + m.pattern + '</strong>';
+                html += '<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span>Strength</span><span style="color:'+color+';font-weight:bold;">'+m.strength+'%</span></div>';
+                html += '<div style="height:6px;background:#f0f0f0;border-radius:3px;margin-top:5px;"><div style="height:100%;width:'+m.strength+'%;background:'+color+';border-radius:3px;"></div></div></div>';
+                html += '<p style="color:#666;font-size:0.85rem;margin-top:8px;">'+m.description+'</p>';
+                html += '</div>';
+            });
+            c.innerHTML = html;
+        }
+
+        function loadAnalytics() {
+            var c = document.getElementById("analytics-container");
+            if (!allTrends.length) {
+                fetchTrends(function(trends){ renderAnalytics(trends); });
+            } else {
+                renderAnalytics(allTrends);
+            }
+        }
+
+        function renderAnalytics(trends) {
+            var c = document.getElementById("analytics-container");
+            var sounds = trends.filter(function(t){return t.type==="sound";}).length;
+            var hashtags = trends.filter(function(t){return t.type==="hashtag";}).length;
+            var topics = trends.filter(function(t){return t.type==="topic";}).length;
+            var formats = trends.filter(function(t){return t.type==="format";}).length;
+            var html = '<div class="trend-card"><h3>Total: ' + trends.length + '</h3><p>Sounds: ' + sounds + ' | Hashtags: ' + hashtags + ' | Topics: ' + topics + ' | Formats: ' + formats + '</p></div>';
+            c.innerHTML = html;
+        }
+
+        function loadCalendar() {
+            var c = document.getElementById("calendar-container");
+            var days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+            if (!allTrends.length) {
+                fetchTrends(function(trends){ renderCalendar(trends); });
+            } else {
+                renderCalendar(allTrends);
+            }
+        }
+
+        function renderCalendar(trends) {
+            var c = document.getElementById("calendar-container");
+            var days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+            var html = "";
+            for (var i=0; i<days.length; i++) {
+                var name = i < trends.length ? trends[i].name : "Rest day";
+                html += '<div class="trend-card"><strong>' + days[i] + '</strong><br><span style="color:#666;font-size:0.85rem;">' + name + '</span></div>';
+            }
+            c.innerHTML = html;
+        }
+
+        function loadSaved() {
+            var c = document.getElementById("saved-container");
+            if (!allTrends.length) {
+                fetchTrends(function(trends){ renderSaved(trends); });
+            } else {
+                renderSaved(allTrends);
+            }
+        }
+
+        function renderSaved(trends) {
+            var c = document.getElementById("saved-container");
+            var saved = trends.filter(function(t){return savedTrends.indexOf(t.id)>-1;});
+            if (!saved.length) { c.innerHTML = "<div class=loading>No saved trends yet</div>"; return; }
+            var html = "";
+            saved.forEach(function(t){
+                html += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="color:#666;">Score: ' + Math.round(t.trend_score) + '</span></div>';
+            });
+            c.innerHTML = html;
+        }
+
+        function loadTrendSelect() {
+            var select = document.getElementById("trend-select");
+            if (!allTrends.length) {
+                fetchTrends(function(trends){ populateSelect(trends); });
+            } else {
+                populateSelect(allTrends);
+            }
+        }
+
+        function populateSelect(trends) {
+            var select = document.getElementById("trend-select");
+            select.innerHTML = "<option value=>Select trend</option>";
+            trends.forEach(function(t){
+                select.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
+            });
+        }
+
+        function generateIdeas() {
+            var id = document.getElementById("trend-select").value;
+            if (!id) { showToast("Select a trend","error"); return; }
+            var c = document.getElementById("ideas-container");
+            var trend = allTrends.find(function(t){return t.id == id;});
+            if (!trend) { c.innerHTML = "<div class=loading>Trend not found</div>"; return; }
+            var ideas = [
+                {title:"How to use " + trend.name, hook:"You won't believe this " + trend.name + " trick!"},
+                {title:"3 secrets about " + trend.name, hook:"Stop scrolling! These " + trend.name + " secrets change everything"},
+                {title: trend.name + " challenge", hook:"I tried " + trend.name + " for 24 hours..."}
+            ];
+            var html = "";
+            ideas.forEach(function(i){
+                html += '<div class="trend-card"><strong>' + i.title + '</strong><p style="color:#667eea;margin-top:5px;">' + i.hook + '</p></div>';
+            });
+            c.innerHTML = html;
+        }
+
         function saveProfile(event) {
             event.preventDefault();
             var profile = {username: document.getElementById("username").value, niche: document.getElementById("niche").value, follower_count: 0, engagement_rate: 0.05, goals: [], sub_niches: [], interests: []};
             fetch(API_URL + "/user/create", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(profile)})
-                .then(function(){ showToast("Saved!", "success"); });
+                .then(function(r){ return r.json(); })
+                .then(function(){ showToast("Profile saved!","success"); })
+                .catch(function(){ showToast("Error saving","error"); });
         }
-        
+
         function addTrend(event) {
             event.preventDefault();
             var trend = {trend_name: document.getElementById("trend-name").value, trend_type: document.getElementById("trend-type").value, video_count: parseInt(document.getElementById("video-count").value||"0"), growth_rate: parseFloat(document.getElementById("growth-rate").value||"0")};
             fetch(API_URL + "/admin/trends", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(trend)})
-                .then(function(){ showToast("Added!", "success"); loadTrends(); });
+                .then(function(r){ return r.json(); })
+                .then(function(){ showToast("Trend added!","success"); loadTrends(); })
+                .catch(function(){ showToast("Error","error"); });
         }
-        
-        function loadMovements() {
-            var c = document.getElementById("movements-container");
-            var movementData = [
-                {pattern: "peace_sign", type: "gesture", trend_strength: 78, description: "Peace sign gesture is trending"},
-                {pattern: "hands_up_jumping", type: "movement", trend_strength: 65, description: "Jumping with hands up dance move"},
-                {pattern: "pointing", type: "gesture", trend_strength: 52, description: "Pointing at text overlay"},
-                {pattern: "head_nod", type: "movement", trend_strength: 48, description: "Nodding to beat"},
-                {pattern: "fist_pump", type: "gesture", trend_strength: 41, description: "Fist pump celebration"}
-            ];
-            var html = "";
-            movementData.forEach(function(m){
-                var color = m.trend_strength > 60 ? "#10b981" : m.trend_strength > 40 ? "#f59e0b" : "#ef4444";
-                html += "<div style=background:white;padding:1rem;border-radius:10px;>";
-                html += "<strong>" + m.pattern.replace(/_/g, " ") + "</strong>";
-                html += "<div style=margin-top:8px;>";
-                html += "<div style=display:flex;justify-content:space-between;font-size:0.85rem;>";
-                html += "<span>Strength</span><span style=color:" + color + ";font-weight:bold;>" + m.trend_strength + "%</span>";
-                html += "</div>";
-                html += "<div style=height:6px;background:#f0f0f0;border-radius:3px;margin-top:5px;><div style=height:100%;width:" + m.trend_strength + "%;background:" + color + ";border-radius:3px;></div></div>";
-                html += "</div><p style=color:#666;font-size:0.85rem;margin-top:8px;>" + m.description + "</p></div>";
-            });
-            c.innerHTML = html;
+
+        function refreshTrends() {
+            showToast("Refreshing...","success");
+            fetch(API_URL + "/refresh", {method:"POST"})
+                .then(function(r){ return r.json(); })
+                .then(function(d){ showToast("Updated " + d.count + " trends","success"); loadTrends(); })
+                .catch(function(){ showToast("Refresh failed","error"); });
         }
-        
+
+        function getStageStyle(stage) {
+            if (stage.indexOf("Early")>=0) return "background:#fef3c7;color:#d97706;";
+            if (stage.indexOf("Emerging")>=0) return "background:#fee2e2;color:#dc2626;";
+            if (stage.indexOf("Rising")>=0) return "background:#e0e7ff;color:#4f46e5;";
+            if (stage.indexOf("Peak")>=0) return "background:#d1fae5;color:#059669;";
+            return "background:#f3f4f6;color:#6b7280;";
+        }
+
+        function formatNumber(num) {
+            if (num>=1000000) return (num/1000000).toFixed(1)+"M";
+            if (num>=1000) return (num/1000).toFixed(1)+"K";
+            return Math.round(num).toString();
+        }
+
         function showToast(msg, type) {
             var toast = document.createElement("div");
             toast.className = "toast " + type;
             toast.textContent = msg;
             document.body.appendChild(toast);
-            setTimeout(function() { toast.remove(); }, 3000);
+            setTimeout(function(){ toast.remove(); }, 3000);
         }
-        
+
+        // initial load
         loadTrends();
     </script>
 </body>
