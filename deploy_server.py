@@ -349,7 +349,7 @@ def alert_loop():
             if not top_trends:
                 continue
             subject = "TrendPilot Alert: Top Opportunities"
-            body = "Top trends right now:
+            body = "Top trends right now:\n\n"
 
 "
             for t in top_trends:
