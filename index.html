@@ -40,7 +40,7 @@
             <div class="nav-brand">TrendPilot</div>
             <div class="nav-links">
                 <button class="nav-link active" data-page="dashboard">Dashboard</button>
-                <button class="nav-link" data-page="manage">Manage</button>
+                
                 <button class="nav-link" data-page="analytics">Analytics</button>
                 <button class="nav-link" data-page="calendar">Calendar</button>
                 <button class="nav-link" data-page="saved">Saved</button>
@@ -111,9 +111,7 @@
                 </form>
             </div>
         </div>
-        <div id="manage" class="page">
-            <div class="page-header"><h1>Manage</h1></div>
-            <div id="manage-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        
         </div>
     </div>
     
@@ -129,7 +127,7 @@
                 document.querySelectorAll(".page").forEach(function(p) { p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
                 if (page === "dashboard") loadTrends();
-                if (page === "manage") loadManage();
+                
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
                 if (page === "saved") loadSaved();
@@ -174,40 +172,9 @@
                 .catch(function() { container.innerHTML = "<div class=loading>Error loading trends</div>"; });
         }
         
-        function loadManage() {
-            var container = document.getElementById("manage-container");
-            container.innerHTML = "<div class=loading>Loading...</div>";
-            fetch(API_URL + "/trends/all")
-                .then(function(r) { 
-                    if (!r.ok) throw new Error("HTTP " + r.status);
-                    return r.json(); 
-                })
-                .then(function(trends) {
-                    if (!trends || !trends.length) {
-                        container.innerHTML = "<div class=loading>No trends found</div>";
-                        return;
-                    }
-                    var html = "";
-                    for (var i = 0; i < trends.length; i++) {
-                        var t = trends[i];
-                        html += "<div class=trend-card>";
-                        html += "<div class=trend-name>" + t.name + "</div>";
-                        html += "<div style=font-size:0.8rem;color:#666;margin-bottom:8px;>" + t.type + " | Score: " + Math.round(t.trend_score) + "</div>";
-                        html += "<button onclick=\"deleteTrend(" + t.id + ")\" style=background:#fee2e2;color:#dc2626;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;>Delete</button>";
-                        html += "</div>";
-                    }
-                    container.innerHTML = html;
-                })
-                .catch(function(e) { 
-                    container.innerHTML = "<div class=loading>Error: " + e.message + "</div>";
-                });
-        }
         
-        function deleteTrend(id) {
-            if (!confirm("Delete this trend?")) return;
-            fetch(API_URL + "/admin/trends/" + id, { method: "DELETE" })
-                .then(function() { loadManage(); showToast("Deleted!", "success"); });
-        }
+        
+        
         
         function refreshTrends() {
             showToast("Fetching trends...", "success");
