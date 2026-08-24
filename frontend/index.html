@@ -438,13 +438,14 @@
             modal.style.height = "100%";
             modal.style.background = "rgba(0,0,0,0.5)";
             modal.style.zIndex = "9999";
+            modal.className = "modal-overlay";
             modal.style.display = "flex";
             modal.style.alignItems = "center";
             modal.style.justifyContent = "center";
             modal.innerHTML = '<div style="background:white;border-radius:12px;padding:2rem;max-width:650px;width:90%;max-height:85vh;overflow-y:auto;">' +
                 '<h2 style="margin-bottom:1rem;">Trend Analysis: ' + trend.name + '</h2>' +
                 '<div id="analysis-content"></div>' +
-                '<button onclick="this.parentElement.remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>' +
+                '<button onclick="this.closest('.modal-overlay').remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>' +
                 '</div>';
             document.body.appendChild(modal);
             
@@ -637,6 +638,13 @@
             document.body.appendChild(toast);
             setTimeout(function(){ toast.remove(); }, 3000);
         }
+
+        
+        document.addEventListener("click", function(e) {
+            if (e.target.classList && e.target.classList.contains("modal-overlay")) {
+                e.target.remove();
+            }
+        });
 
         // initial load
         loadTrends();
