@@ -45,6 +45,7 @@
             <div class="nav-links">
                 <button class="nav-link active" data-page="dashboard" title="View trending content ranked by opportunity">Dashboard</button>
                 <button class="nav-link" data-page="movements" title="Detected gesture and movement trends">Movements</button>
+                <button class="nav-link" data-page="locations" title="Trending locations and local trends">Locations</button>
                 <button class="nav-link" data-page="analytics" title="Trend statistics">Analytics</button>
                 <button class="nav-link" data-page="calendar" title="Weekly content plan">Calendar</button>
                 <button class="nav-link" data-page="saved" title="Your bookmarked trends">Saved</button>
@@ -60,6 +61,23 @@
         <div id="dashboard" class="page active">
             <div class="page-header"><h1>Trending Now</h1></div>
             <div id="trends-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="locations" class="page">
+            <div class="page-header"><h1>Trending Locations</h1><p>See local and international trends by region</p></div>
+            <div style="margin-bottom:1rem;">
+                <select id="region-select" class="form-control" style="max-width:300px;display:inline-block;"></select>
+                <button class="btn btn-primary" onclick="loadLocationTrends()">Show Trends</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div>
+                    <h3>Local Trends</h3>
+                    <div id="local-trends" class="trends-grid"></div>
+                </div>
+                <div>
+                    <h3>International Trends</h3>
+                    <div id="international-trends" class="trends-grid"></div>
+                </div>
+            </div>
         </div>
         <div id="movements" class="page">
             <div class="page-header"><h1>Movement Trends</h1><p>Detected gestures and patterns</p></div>
@@ -135,6 +153,7 @@
                 document.getElementById(page).classList.add("active");
                 if (page === "dashboard") loadTrends();
                 if (page === "movements") loadMovements();
+                if (page === "locations") loadRegions();
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
                 if (page === "saved") loadSaved();
@@ -441,6 +460,26 @@
             html += "</div>";
             
             document.getElementById("analysis-content").innerHTML = html;
+            
+            // Fetch and display top locations
+            fetch(API_URL + "/trends/" + trendId + "/locations")
+                .then(function(r){ return r.json(); })
+                .then(function(locData){
+                    var locHtml = "<div style=\"background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
+                    locHtml += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">📍 Top Trending Locations</h3>";
+                    locData.top_locations.forEach(function(loc){
+                        locHtml += "<span style=\"display:inline-block;background:#e0e7ff;color:#4f46e5;padding:3px 10px;border-radius:15px;margin:3px;font-size:0.85rem;\">" + loc + "</span>";
+                    });
+                    if (locData.is_international) {
+                        locHtml += "<p style=\"color:#10b981;margin-top:8px;\">🌍 This is an international trend</p>";
+                    } else {
+                        locHtml += "<p style=\"color:#f59e0b;margin-top:8px;\">📍 This is a local/regional trend</p>";
+                    }
+                    locHtml += "</div>";
+                    var analysisContent = document.getElementById("analysis-content");
+                    analysisContent.innerHTML += locHtml;
+                })
+                .catch(function(){});
         }
         
         function generateCommentSamples(trend) {
@@ -491,6 +530,39 @@
             return Math.min(95, score + 40); // base 40 + factors
         }
         
+        
+        function loadRegions() {
+            var select = document.getElementById("region-select");
+            fetch(API_URL + "/trends/regions").then(function(r){return r.json();}).then(function(d){
+                select.innerHTML = "";
+                d.regions.forEach(function(region){
+                    select.innerHTML += '<option value="' + region + '">' + region + '</option>';
+                });
+                // Default to first
+                if (d.regions.length) loadLocationTrends();
+            });
+        }
+        
+        function loadLocationTrends() {
+            var region = document.getElementById("region-select").value;
+            if (!region) return;
+            fetch(API_URL + "/trends/by-region?region=" + encodeURIComponent(region))
+                .then(function(r){return r.json();})
+                .then(function(d){
+                    var localC = document.getElementById("local-trends");
+                    var intlC = document.getElementById("international-trends");
+                    localC.innerHTML = "";
+                    intlC.innerHTML = "";
+                    
+                    d.local_trends.forEach(function(t){
+                        localC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                    
+                    d.international_trends.forEach(function(t){
+                        intlC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                });
+        }
         
         function showToast(msg, type) {
             var toast = document.createElement("div");
