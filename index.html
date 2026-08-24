@@ -85,6 +85,7 @@
                 <button class="nav-link active" data-page="dashboard" title="View trending content and local/international trends">Dashboard</button>
                 <button class="nav-link" data-page="movements" title="Detected gestures and movements">Movements</button>
                 <button class="nav-link" data-page="analytics" title="Trend statistics">Analytics</button>
+                <button class="nav-link" data-page="engagement" title="User behavior and engagement stats">Engagement</button>
                 <button class="nav-link" data-page="calendar" title="Weekly plan">Calendar</button>
                 <button class="nav-link" data-page="saved" title="Bookmarked trends">Saved</button>
                 <button class="nav-link" data-page="ideas" title="Generate content ideas">Ideas</button>
@@ -116,6 +117,10 @@
             <div id="movements-container" class="trends-grid"></div>
         </div>
 
+        <div id="engagement" class="page">
+            <div class="page-header"><h1>Engagement Dashboard</h1><p>Real user behavior per trend</p></div>
+            <div id="engagement-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
         <div id="analytics" class="page">
             <div class="page-header"><h1>Analytics</h1></div>
             <div id="analytics-container" class="trends-grid"></div>
@@ -193,6 +198,7 @@
         checkAuth();
         checkPremium(); }
                 if (page === "movements") loadMovements();
+                if (page === "engagement") loadEngagement();
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
                 if (page === "saved") loadSaved();
@@ -529,6 +535,32 @@
             return Math.round(num).toString();
         }
 
+        function loadEngagement() {
+            var c = document.getElementById("engagement-container");
+            c.innerHTML = "<div class=loading>Loading engagement data...</div>";
+            fetch(API_URL + "/engagement/overview")
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    if (!d.engagement || !d.engagement.length) {
+                        c.innerHTML = "<div class=loading>No engagement data yet. Interact with trends to generate data.</div>";
+                        return;
+                    }
+                    var html = "";
+                    d.engagement.forEach(function(e){
+                        html += '<div class="trend-card">';
+                        html += '<strong>' + e.trend_name + '</strong>';
+                        html += '<div style="margin-top:8px;font-size:0.9rem;">';
+                        html += '<div>Total Interactions: <strong>' + e.total_interactions + '</strong></div>';
+                        html += '<div>Saves: <strong>' + e.saves + '</strong> | Analysis Views: <strong>' + e.analysis_views + '</strong></div>';
+                        html += '<div>Unique Users: <strong>' + e.unique_users + '</strong> | Recurring Users: <strong>' + e.recurring_users + '</strong></div>';
+                        html += '<div>Engagement Score: <strong>' + e.engagement_score + '</strong></div>';
+                        html += '</div></div>';
+                    });
+                    c.innerHTML = html;
+                })
+                .catch(function(){ c.innerHTML = "<div class=loading>Error loading engagement</div>"; });
+        }
+        
         function showToast(msg, type) {
             var toast = document.createElement("div");
             toast.className = "toast " + type;

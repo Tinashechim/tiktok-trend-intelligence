@@ -75,6 +75,16 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+
+class UserInteraction(Base):
+    __tablename__ = "user_interactions"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
+    trend_id = Column(Integer)
+    action_type = Column(String(50))  # save, analysis_view, detail_click, etc.
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(engine)
 
 # Seed sample trends if empty
@@ -555,6 +565,13 @@ async def predict_trend(trend_id: int, db=Depends(get_db)):
         "prediction": round(float(proba), 4),
         "success_probability": round(float(proba) * 100, 2)
     }
+
+
+
+class InteractionCreate(BaseModel):
+    user_id: int
+    trend_id: int
+    action_type: str
 
 
 class PerformanceRequest(BaseModel):
