@@ -1,4 +1,7 @@
 ﻿import os
+import jwt
+import hashlib
+import secrets
 import re
 import random
 import threading
@@ -15,6 +18,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///trend_intelligence.db")
+SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -621,26 +625,49 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_token(user_id: int, username: str) -> str:
+    payload = {
+        "sub": str(user_id),
+        "username": username,
+        "exp": datetime.utcnow() + timedelta(hours=24)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
 @app.post("/api/auth/register")
 async def register_user(user: UserRegister, db=Depends(get_db)):
-    # Check if user exists
     existing = db.query(User).filter((User.email == user.email) | (User.username == user.username)).first()
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
     
-    # In production, hash the password!
-    new_user = User(username=user.username, email=user.email, password=user.password)
+    hashed_pw = hash_password(user.password)
+    new_user = User(username=user.username, email=user.email, password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"id": new_user.id, "message": "User created"}
+    token = create_token(new_user.id, new_user.username)
+    return {"id": new_user.id, "username": new_user.username, "email": new_user.email, "token": token}
 
 @app.post("/api/auth/login")
 async def login_user(user: UserLogin, db=Depends(get_db)):
-    existing = db.query(User).filter(User.email == user.email, User.password == user.password).first()
+    hashed_pw = hash_password(user.password)
+    existing = db.query(User).filter(User.email == user.email, User.password == hashed_pw).first()
     if not existing:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"id": existing.id, "username": existing.username, "email": existing.email, "token": f"tok_{existing.id}"}
+    token = create_token(existing.id, existing.username)
+    return {"id": existing.id, "username": existing.username, "email": existing.email, "token": token}
 
 @app.post("/api/admin/trends")
 async def create_trend(trend: TrendCreate, db=Depends(get_db)):
@@ -665,9 +692,21 @@ class SaveTrendRequest(BaseModel):
     user_id: int
     trend_id: int
 
+
+from fastapi import Header
+
+def get_current_user(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+    token = authorization.split(" ")[1]
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return payload
+
+
 @app.post("/api/user/save-trend")
-async def save_trend(request: SaveTrendRequest, db=Depends(get_db)):
-    # Store saved trend in a simple table (we'll use JSON file for demo)
+async def save_trend(request: SaveTrendRequest, current_user=Depends(get_current_user)):
     import json
     saved = {}
     try:
@@ -686,7 +725,7 @@ async def save_trend(request: SaveTrendRequest, db=Depends(get_db)):
     return {"message": "Saved"}
 
 @app.get("/api/user/saved-trends/{user_id}")
-async def get_saved_trends(user_id: int, db=Depends(get_db)):
+async def get_saved_trends(user_id: int, current_user=Depends(get_current_user)):
     import json
     try:
         with open('saved_trends.json', 'r') as f:

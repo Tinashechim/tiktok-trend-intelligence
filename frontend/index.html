@@ -231,12 +231,27 @@
             });
         }
 
+        function getAuthHeaders() {
+            var token = localStorage.getItem("authToken");
+            return token ? {"Authorization": "Bearer " + token, "Content-Type": "application/json"} : {"Content-Type": "application/json"};
+        }
+        
         function toggleSave(id) {
             var idx = savedTrends.indexOf(id);
             if (idx > -1) { savedTrends.splice(idx,1); showToast("Removed","success"); }
             else { savedTrends.push(id); showToast("Saved","success"); }
             localStorage.setItem("savedTrends", JSON.stringify(savedTrends));
             loadTrends();
+            
+            var authUser = localStorage.getItem("authUser");
+            if (authUser) {
+                var user = JSON.parse(authUser);
+                fetch(API_URL + "/user/save-trend", {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({user_id: user.id, trend_id: id})
+                }).then(function(r){ return r.json(); }).then(function(d){ console.log(d); }).catch(function(){});
+            }
         }
 
         function generateCommentSamples(trend) {
