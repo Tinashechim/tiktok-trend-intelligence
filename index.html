@@ -182,22 +182,38 @@
             .trends-grid { grid-template-columns: 1fr; }
             .nav-container { flex-wrap: nowrap; }
         }
-    </style>
+    
+        .tooltip {
+            position: fixed;
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            animation: fadeIn 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            line-height: 1.4;
+        }
+        [data-tooltip] { cursor: help; }
+</style>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">TrendPilot</div>
             <div class="nav-links">
-                <button class="nav-link active" data-page="dashboard">Dashboard</button>
-                <button class="nav-link" data-page="analytics">Analytics</button>
-                <button class="nav-link" data-page="calendar">Calendar</button>
-                <button class="nav-link" data-page="saved">Saved</button>
-                <button class="nav-link" data-page="ideas">Content Ideas</button>
-                <button class="nav-link" data-page="profile">Profile</button>
-                <button class="nav-link" data-page="admin">Add Trends</button>
-                <button class="nav-link" data-page="manage">Manage</button>
-                <button class="nav-link btn-refresh" onclick="refreshTrends()">Refresh</button>
+                <button class="nav-link active" data-page="dashboard" data-tooltip="View all current trending content ranked by opportunity score">Dashboard</button>
+                <button class="nav-link" data-page="analytics" data-tooltip="See breakdown of trends by type and score">Analytics</button>
+                <button class="nav-link" data-page="calendar" data-tooltip="Weekly content plan with recommended posting days">Calendar</button>
+                <button class="nav-link" data-page="saved" data-tooltip="Your bookmarked trends for future reference">Saved</button>
+                <button class="nav-link" data-page="ideas" data-tooltip="Generate video content ideas from trending topics">Content Ideas</button>
+                <button class="nav-link" data-page="profile" data-tooltip="Set your niche and audience size for personalized recommendations">Profile</button>
+                <button class="nav-link" data-page="admin" data-tooltip="Manually add trends you find on TikTok">Add Trends</button>
+                <button class="nav-link" data-page="manage" data-tooltip="Delete outdated or irrelevant trends">Manage</button>
+                <button class="nav-link btn-refresh" onclick="refreshTrends()" data-tooltip="Fetch latest trends from multiple sources automatically">Refresh</button>
             </div>
         </div>
     </nav>
@@ -346,7 +362,35 @@
                 this.classList.add("active");
                 document.querySelectorAll(".page").forEach(function(p) { p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
-                if (page === "dashboard") loadTrends();
+                if (page === "dashboard") 
+        // Tooltip system
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.style.display = "none";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            const target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                const rect = target.getBoundingClientRect();
+                const tr = tooltip.getBoundingClientRect();
+                let left = rect.left + (rect.width / 2) - (tr.width / 2);
+                let top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends();
                 if (page === "manage") loadManage();
                 if (page === "ideas") loadTrendSelect();
                 if (page === "analytics") loadAnalytics();
@@ -361,7 +405,35 @@
                 const r = await fetch(API_URL + "/refresh", { method: "POST" });
                 const d = await r.json();
                 showToast("Updated " + d.count + " trends!", "success");
-                loadTrends();
+                
+        // Tooltip system
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.style.display = "none";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            const target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                const rect = target.getBoundingClientRect();
+                const tr = tooltip.getBoundingClientRect();
+                let left = rect.left + (rect.width / 2) - (tr.width / 2);
+                let top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends();
             } catch(e) { showToast("Error refreshing", "error"); }
         }
         
@@ -389,9 +461,9 @@
                 html += "</div>";
                 html += "<div class=trend-name>" + t.name + "</div>";
                 html += "<div class=trend-metrics>";
-                html += "<div class=metric><div class=metric-value>" + (t.growth_rate > 0 ? "+" : "") + Math.round(t.growth_rate) + "%</div><div class=metric-label>Growth</div></div>";
-                html += "<div class=metric><div class=metric-value>" + t.competition_level + "</div><div class=metric-label>Competition</div></div>";
-                html += "<div class=metric><div class=metric-value>" + formatNumber(t.video_count) + "</div><div class=metric-label>Videos</div></div>";
+                html += "<div class=metric><div class=metric-value>" + (t.growth_rate > 0 ? "+" : "") + Math.round(t.growth_rate) + "%</div><div class=metric-label data-tooltip="Week-over-week growth rate. Higher means the trend is accelerating faster.">Growth</div></div>";
+                html += "<div class=metric><div class=metric-value>" + t.competition_level + "</div><div class=metric-label data-tooltip="How many creators are using this trend. Lower competition means your content stands out more.">Competition</div></div>";
+                html += "<div class=metric><div class=metric-value>" + formatNumber(t.video_count) + "</div><div class=metric-label data-tooltip="Total number of videos using this trend.">Videos</div></div>";
                 html += "</div>";
                 html += "<button onclick=saveTrend(" + t.id + ") style=margin-top:8px;background:none;border:none;cursor:pointer;>" + (isSaved ? "Remove" : "Save") + "</button>";
                 html += "</div>";
@@ -404,7 +476,35 @@
             if (idx === -1) { savedTrends.push(id); showToast("Saved!", "success"); }
             else { savedTrends.splice(idx, 1); showToast("Removed", "success"); }
             localStorage.setItem("savedTrends", JSON.stringify(savedTrends));
-            loadTrends();
+            
+        // Tooltip system
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.style.display = "none";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            const target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                const rect = target.getBoundingClientRect();
+                const tr = tooltip.getBoundingClientRect();
+                let left = rect.left + (rect.width / 2) - (tr.width / 2);
+                let top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends();
         }
         
         async function loadManage() {
@@ -448,7 +548,35 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(trend)
                 });
-                if (r.ok) { showToast("Added!", "success"); loadTrends(); }
+                if (r.ok) { showToast("Added!", "success"); 
+        // Tooltip system
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.style.display = "none";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            const target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                const rect = target.getBoundingClientRect();
+                const tr = tooltip.getBoundingClientRect();
+                let left = rect.left + (rect.width / 2) - (tr.width / 2);
+                let top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends(); }
             } catch(e) { showToast("Error", "error"); }
         }
         
@@ -575,7 +703,35 @@
             setTimeout(function() { toast.remove(); }, 3000);
         }
         
-        loadTrends();
+        
+        // Tooltip system
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.style.display = "none";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            const target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                const rect = target.getBoundingClientRect();
+                const tr = tooltip.getBoundingClientRect();
+                let left = rect.left + (rect.width / 2) - (tr.width / 2);
+                let top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends();
     </script>
 </body>
 </html>
