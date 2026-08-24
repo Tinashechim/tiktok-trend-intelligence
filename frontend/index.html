@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrendPilot</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -38,7 +39,43 @@
         [title] { cursor:help; }
         .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; display:flex; align-items:center; justify-content:center; }
         .modal-content { background:white; border-radius:12px; padding:2rem; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; }
-    </style>
+    
+        @media (max-width: 768px) {
+            .nav-container { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .nav-brand { font-size: 1rem; }
+            .nav-link { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+            .main-container { padding: 0.8rem; }
+            .page-header h1 { font-size: 1.2rem; }
+            .trends-grid { grid-template-columns: 1fr; }
+            .trend-card { padding: 0.8rem; }
+            .trend-metrics { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+            #dashboard .trends-grid { grid-template-columns: 1fr; }
+            .modal-content { max-width: 95%; padding: 1.2rem; }
+            #analysis-content h3 { font-size: 1rem; }
+            .form-control { font-size: 0.9rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+            h3 { font-size: 1rem; }
+            .analytics-grid { grid-template-columns: 1fr; }
+            #local-trends, #international-trends { width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .nav-brand { font-size: 0.9rem; }
+            .nav-link { padding: 0.3rem 0.5rem; font-size: 0.7rem; }
+            .trend-metrics { grid-template-columns: repeat(3, 1fr); gap: 2px; }
+            .trend-score { font-size: 1rem; }
+            .trend-name { font-size: 0.9rem; }
+            .metric-value { font-size: 0.8rem; }
+            .metric-label { font-size: 0.65rem; }
+            .page-header h1 { font-size: 1rem; }
+            .page-header p { font-size: 0.8rem; }
+            #dashboard .trends-grid { gap: 0.5rem; }
+        }
+
+        .location-grid { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 768px) {
+            .location-grid { grid-template-columns: 1fr; }
+        }
+</style>
 </head>
 <body>
     <nav class="navbar">
@@ -66,7 +103,7 @@
                 <select id="region-select" class="form-control" style="max-width:220px;display:inline-block;"></select>
                 <button class="btn btn-primary" onclick="loadDashboardLocationTrends()">Show My Trends</button>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
+            <div class="location-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
                 <div><h3>Local Trends</h3><div id="local-trends" class="trends-grid"></div></div>
                 <div><h3>International Trends</h3><div id="international-trends" class="trends-grid"></div></div>
             </div>
