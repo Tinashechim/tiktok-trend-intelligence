@@ -308,6 +308,15 @@ class TrendCreate(BaseModel):
     trend_stage: str = "📈 Rising"
 
 
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    username = Column(String(100), unique=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=False)
+    password = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class UserProfileCreate(BaseModel):
     username: str
     niche: str
@@ -602,6 +611,37 @@ async def get_opportunities(user_id: int, db=Depends(get_db)):
     return {"user_niche": user.niche, "opportunities": opportunities[:10]}
 
 
+
+class UserRegister(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/auth/register")
+async def register_user(user: UserRegister, db=Depends(get_db)):
+    # Check if user exists
+    existing = db.query(User).filter((User.email == user.email) | (User.username == user.username)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+    
+    # In production, hash the password!
+    new_user = User(username=user.username, email=user.email, password=user.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"id": new_user.id, "message": "User created"}
+
+@app.post("/api/auth/login")
+async def login_user(user: UserLogin, db=Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email, User.password == user.password).first()
+    if not existing:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"id": existing.id, "username": existing.username, "email": existing.email, "token": f"tok_{existing.id}"}
+
 @app.post("/api/admin/trends")
 async def create_trend(trend: TrendCreate, db=Depends(get_db)):
     new_trend = Trend(
@@ -619,6 +659,41 @@ async def create_trend(trend: TrendCreate, db=Depends(get_db)):
     db.refresh(new_trend)
     return {"id": new_trend.id, "message": "Trend added"}
 
+
+
+class SaveTrendRequest(BaseModel):
+    user_id: int
+    trend_id: int
+
+@app.post("/api/user/save-trend")
+async def save_trend(request: SaveTrendRequest, db=Depends(get_db)):
+    # Store saved trend in a simple table (we'll use JSON file for demo)
+    import json
+    saved = {}
+    try:
+        with open('saved_trends.json', 'r') as f:
+            saved = json.load(f)
+    except:
+        pass
+    
+    user_id = str(request.user_id)
+    if user_id not in saved:
+        saved[user_id] = []
+    if request.trend_id not in saved[user_id]:
+        saved[user_id].append(request.trend_id)
+    with open('saved_trends.json', 'w') as f:
+        json.dump(saved, f)
+    return {"message": "Saved"}
+
+@app.get("/api/user/saved-trends/{user_id}")
+async def get_saved_trends(user_id: int, db=Depends(get_db)):
+    import json
+    try:
+        with open('saved_trends.json', 'r') as f:
+            saved = json.load(f)
+        return {"trend_ids": saved.get(str(user_id), [])}
+    except:
+        return {"trend_ids": []}
 
 @app.delete("/api/admin/trends/{trend_id}")
 async def delete_trend(trend_id: int, db=Depends(get_db)):

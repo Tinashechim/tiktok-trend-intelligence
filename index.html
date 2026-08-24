@@ -189,7 +189,8 @@
                 this.classList.add("active");
                 document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
-                if (page === "dashboard") { loadTrends(); loadDashboardRegions(); }
+                if (page === "dashboard") { loadTrends(); loadDashboardRegions();
+        checkAuth(); }
                 if (page === "movements") loadMovements();
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
@@ -522,6 +523,7 @@
 
         loadTrends();
         loadDashboardRegions();
+        checkAuth();
     </script>
 </body>
 </html>
