@@ -193,7 +193,7 @@
                 <button class="nav-link" data-page="manage">Manage</button>
             </div>
         </div>
-    </nav>
+    <button class="nav-link" onclick="refreshTrends()" style="background:#10b981;color:white;">🔄 Refresh Trends</button></nav>
     
     <div class="main-container">
         <div id="dashboard" class="page active">
@@ -425,6 +425,18 @@
         }
         
         loadTrends();
-    </script>
+    
+        async function refreshTrends() {
+            showToast("Fetching latest trends...", "success");
+            try {
+                const response = await fetch(API_URL + "/refresh", { method: "POST" });
+                const data = await response.json();
+                showToast("Updated " + data.count + " trends!", "success");
+                loadTrends();
+            } catch (error) {
+                showToast("Error refreshing trends", "error");
+            }
+        }
+</script>
 </body>
 </html>
