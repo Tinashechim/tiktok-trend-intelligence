@@ -18,7 +18,7 @@
         .page-header { margin-bottom:1rem; }
         .page-header h1 { font-size:1.4rem; color:#333; }
         .trends-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:1rem; }
-        .trend-card { background:white; border-radius:10px; padding:1rem; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .trend-card { background:white; border-radius:10px; padding:1rem; box-shadow:0 2px 10px rgba(0,0,0,0.1); position:relative; }
         .trend-stage { display:inline-block; padding:3px 8px; border-radius:15px; font-size:0.7rem; font-weight:bold; margin-bottom:8px; }
         .trend-header { display:flex; justify-content:space-between; margin-bottom:8px; }
         .trend-type { background:#e0e7ff; color:#4f46e5; padding:3px 8px; border-radius:15px; font-size:0.7rem; font-weight:bold; text-transform:uppercase; }
@@ -36,6 +36,8 @@
         .btn-primary { background:#667eea; color:white; }
         .form-control { width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; margin-bottom:0.5rem; }
         [title] { cursor:help; }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; display:flex; align-items:center; justify-content:center; }
+        .modal-content { background:white; border-radius:12px; padding:2rem; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; }
     </style>
 </head>
 <body>
@@ -43,16 +45,15 @@
         <div class="nav-container">
             <div class="nav-brand">TrendPilot</div>
             <div class="nav-links">
-                <button class="nav-link active" data-page="dashboard" title="View trending content ranked by opportunity">Dashboard</button>
-                <button class="nav-link" data-page="movements" title="Detected gesture and movement trends">Movements</button>
-                <button class="nav-link" data-page="locations" title="Trending locations and local trends">Locations</button>
+                <button class="nav-link active" data-page="dashboard" title="View trending content and local/international trends">Dashboard</button>
+                <button class="nav-link" data-page="movements" title="Detected gestures and movements">Movements</button>
                 <button class="nav-link" data-page="analytics" title="Trend statistics">Analytics</button>
-                <button class="nav-link" data-page="calendar" title="Weekly content plan">Calendar</button>
-                <button class="nav-link" data-page="saved" title="Your bookmarked trends">Saved</button>
+                <button class="nav-link" data-page="calendar" title="Weekly plan">Calendar</button>
+                <button class="nav-link" data-page="saved" title="Bookmarked trends">Saved</button>
                 <button class="nav-link" data-page="ideas" title="Generate content ideas">Ideas</button>
-                <button class="nav-link" data-page="profile" title="Set your preferences">Profile</button>
+                <button class="nav-link" data-page="profile" title="Set preferences">Profile</button>
                 <button class="nav-link" data-page="add" title="Manually add trends">Add</button>
-                <button class="nav-link" onclick="refreshTrends()" title="Fetch latest trends from sources">Refresh</button>
+                <button class="nav-link" onclick="refreshTrends()" title="Refresh data">Refresh</button>
             </div>
         </div>
     </nav>
@@ -61,62 +62,45 @@
         <div id="dashboard" class="page active">
             <div class="page-header"><h1>Trending Now</h1></div>
             <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
-                <span style="font-weight:bold;color:#333;">📍 Region:</span>
-                <select id="dashboard-region-select" class="form-control" style="max-width:220px;display:inline-block;"></select>
+                <span style="font-weight:bold;">Region:</span>
+                <select id="region-select" class="form-control" style="max-width:220px;display:inline-block;"></select>
                 <button class="btn btn-primary" onclick="loadDashboardLocationTrends()">Show My Trends</button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
-                <div>
-                    <h3 style="margin-bottom:0.5rem;">Local Trends</h3>
-                    <div id="local-trends-dashboard" class="trends-grid"></div>
-                </div>
-                <div>
-                    <h3 style="margin-bottom:0.5rem;">International Trends</h3>
-                    <div id="international-trends-dashboard" class="trends-grid"></div>
-                </div>
+                <div><h3>Local Trends</h3><div id="local-trends" class="trends-grid"></div></div>
+                <div><h3>International Trends</h3><div id="international-trends" class="trends-grid"></div></div>
             </div>
-            <h3 style="margin-bottom:0.5rem;">All Trends</h3>
+            <h3>All Trends</h3>
             <div id="trends-container" class="trends-grid"><div class="loading">Loading...</div></div>
         </div>
-        <div id="locations" class="page">
-            <div class="page-header"><h1>Trending Locations</h1><p>See local and international trends by region</p></div>
-            <div style="margin-bottom:1rem;">
-                <select id="region-select" class="form-control" style="max-width:300px;display:inline-block;"></select>
-                <button class="btn btn-primary" onclick="loadLocationTrends()">Show Trends</button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                <div>
-                    <h3>Local Trends</h3>
-                    <div id="local-trends" class="trends-grid"></div>
-                </div>
-                <div>
-                    <h3>International Trends</h3>
-                    <div id="international-trends" class="trends-grid"></div>
-                </div>
-            </div>
-        </div>
+
         <div id="movements" class="page">
-            <div class="page-header"><h1>Movement Trends</h1><p>Detected gestures and patterns</p></div>
+            <div class="page-header"><h1>Movement Trends</h1></div>
             <div id="movements-container" class="trends-grid"></div>
         </div>
+
         <div id="analytics" class="page">
             <div class="page-header"><h1>Analytics</h1></div>
             <div id="analytics-container" class="trends-grid"></div>
         </div>
+
         <div id="calendar" class="page">
             <div class="page-header"><h1>Weekly Calendar</h1></div>
             <div id="calendar-container" class="trends-grid"></div>
         </div>
+
         <div id="saved" class="page">
             <div class="page-header"><h1>Saved Trends</h1></div>
             <div id="saved-container" class="trends-grid"></div>
         </div>
+
         <div id="ideas" class="page">
             <div class="page-header"><h1>Content Ideas</h1></div>
             <select id="trend-select" class="form-control"><option value="">Select trend</option></select>
             <button class="btn btn-primary" onclick="generateIdeas()">Generate</button>
             <div id="ideas-container" style="margin-top:1rem;"></div>
         </div>
+
         <div id="profile" class="page">
             <div class="page-header"><h1>Profile</h1></div>
             <div style="max-width:400px;">
@@ -136,6 +120,7 @@
                 </form>
             </div>
         </div>
+
         <div id="add" class="page">
             <div class="page-header"><h1>Add Trend</h1></div>
             <div style="max-width:400px;">
@@ -167,10 +152,8 @@
                 this.classList.add("active");
                 document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
                 document.getElementById(page).classList.add("active");
-                if (page === "dashboard") loadTrends();
-        loadDashboardRegions();
+                if (page === "dashboard") { loadTrends(); loadDashboardRegions(); }
                 if (page === "movements") loadMovements();
-                if (page === "locations") loadRegions();
                 if (page === "analytics") loadAnalytics();
                 if (page === "calendar") loadCalendar();
                 if (page === "saved") loadSaved();
@@ -203,7 +186,7 @@
                     html += '<div class="metric"><div class="metric-value">' + formatNumber(t.video_count) + '</div><div class="metric-label">Videos</div></div>';
                     html += '</div>';
                     html += '<button onclick="toggleSave(' + t.id + ')" style="margin-top:8px;background:none;border:none;cursor:pointer;">' + (savedTrends.indexOf(t.id)>-1 ? 'Remove' : 'Save') + '</button>';
-                html += '<button onclick="showAnalysis(' + t.id + ')" style="margin-top:8px;background:#667eea;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;margin-left:5px;">Analysis</button>';
+                    html += '<button onclick="showAnalysis(' + t.id + ')" style="margin-top:8px;background:#667eea;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;margin-left:5px;">Analysis</button>';
                     html += '</div>';
                 });
                 c.innerHTML = html;
@@ -216,105 +199,107 @@
             else { savedTrends.push(id); showToast("Saved","success"); }
             localStorage.setItem("savedTrends", JSON.stringify(savedTrends));
             loadTrends();
-        loadDashboardRegions();
+        }
+
+        function showAnalysis(trendId) {
+            var trend = allTrends.find(function(t){ return t.id == trendId; });
+            if (!trend) { showToast("Trend not found", "error"); return; }
+            var overlay = document.createElement("div");
+            overlay.className = "modal-overlay";
+            var modal = document.createElement("div");
+            modal.className = "modal-content";
+            modal.innerHTML = '<h2 style="margin-bottom:1rem;">Trend Analysis: ' + trend.name + '</h2>' +
+                '<div id="analysis-content">Loading...</div>' +
+                '<button onclick="this.closest(\'.modal-overlay\').remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>';
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            overlay.addEventListener("click", function(e) {
+                if (e.target === overlay) overlay.remove();
+            });
+
+            var growth = trend.growth_rate || 0;
+            var competition = trend.competition_level || "Medium";
+            var stage = trend.trend_stage || "Unknown";
+            var type = trend.type || "hashtag";
+            var growthDesc = growth > 300 ? "exploding (+" + Math.round(growth) + "% weekly)" : growth > 150 ? "growing very fast (+" + Math.round(growth) + "% weekly)" : growth > 50 ? "growing steadily (+" + Math.round(growth) + "% weekly)" : "growing slowly (+" + Math.round(growth) + "% weekly)";
+            var compDesc = competition === "Very Low" ? "almost no one is using it" : competition === "Low" ? "low competition" : competition === "Medium" ? "moderate competition" : competition === "High" ? "high competition" : "very high competition";
+            var stageAdvice = stage.indexOf("Early")>=0 ? "This is a brand-new trend. Jump on it NOW." : stage.indexOf("Emerging")>=0 ? "This trend is gaining momentum. Post within 24-48 hours." : stage.indexOf("Rising")>=0 ? "Popular but growing. Still reachable." : stage.indexOf("Peak")>=0 ? "Saturated. Need unique angle." : "Declining.";
+            var typeAdvice = type === "sound" ? "Use the exact sound without modifications." : type === "hashtag" ? "Include the hashtag naturally with 2-3 niche hashtags." : type === "topic" ? "Add your personal experience to this topic." : "Match the format exactly.";
+            var beatAdvice = growth > 200 && (competition === "Very Low" || competition === "Low") ? "Golden opportunity: post immediately with high quality." : growth > 100 && competition === "Medium" ? "Good opportunity. Use stronger hook." : competition === "High" || competition === "Very High" ? "Tough competition. Need unique angle and better hook." : "Moderate opportunity. Focus on authenticity.";
+
+            var html = '<div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>Why It\'s Trending</h3><p style="color:#555;">This trend is ' + growthDesc + ' with ' + compDesc + '. ' + stageAdvice + '</p></div>';
+            html += '<div style="background:#f0fdf4;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>What Makes It Unique</h3><p style="color:#555;">' + typeAdvice + '</p></div>';
+            html += '<div style="background:#fef3c7;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>How to Beat</h3><p style="color:#555;">' + beatAdvice + '</p></div>';
+            document.getElementById("analysis-content").innerHTML = html;
+
+            fetch(API_URL + "/trends/" + trendId + "/locations")
+                .then(function(r){ return r.json(); })
+                .then(function(locData){
+                    var locHtml = '<div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>📍 Top Locations</h3>';
+                    locData.top_locations.forEach(function(loc){ locHtml += '<span style="display:inline-block;background:#e0e7ff;color:#4f46e5;padding:3px 10px;border-radius:15px;margin:3px;font-size:0.85rem;">' + loc + '</span>'; });
+                    locHtml += (locData.is_international ? '<p style="color:#10b981;margin-top:8px;">🌍 International trend</p>' : '<p style="color:#f59e0b;margin-top:8px;">📍 Local trend</p>');
+                    locHtml += '</div>';
+                    document.getElementById("analysis-content").insertAdjacentHTML("beforeend", locHtml);
+                });
         }
 
         function loadMovements() {
             var c = document.getElementById("movements-container");
             var movements = [
-                {pattern:"Peace Sign", strength:78, description:"Peace sign gesture trending"},
-                {pattern:"Hands Up Jumping", strength:65, description:"Dance move with hands up"},
-                {pattern:"Pointing", strength:52, description:"Pointing at text overlay"},
-                {pattern:"Head Nod", strength:48, description:"Nodding to beat"},
-                {pattern:"Fist Pump", strength:41, description:"Celebration gesture"}
+                {name:"Peace Sign", strength:78, description:"Peace sign gesture trending"},
+                {name:"Jumping Hands Up", strength:65, description:"Dance move with hands up"},
+                {name:"Pointing", strength:52, description:"Pointing at text overlay"},
+                {name:"Head Nod", strength:48, description:"Nodding to beat"},
+                {name:"Fist Pump", strength:41, description:"Celebration gesture"}
             ];
             var html = "";
             movements.forEach(function(m){
                 var color = m.strength>60?"#10b981":m.strength>40?"#f59e0b":"#ef4444";
-                html += '<div class="trend-card">';
-                html += '<strong>' + m.pattern + '</strong>';
-                html += '<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span>Strength</span><span style="color:'+color+';font-weight:bold;">'+m.strength+'%</span></div>';
-                html += '<div style="height:6px;background:#f0f0f0;border-radius:3px;margin-top:5px;"><div style="height:100%;width:'+m.strength+'%;background:'+color+';border-radius:3px;"></div></div></div>';
-                html += '<p style="color:#666;font-size:0.85rem;margin-top:8px;">'+m.description+'</p>';
-                html += '</div>';
+                html += '<div class="trend-card"><strong>' + m.name + '</strong><div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span>Strength</span><span style="color:'+color+';font-weight:bold;">'+m.strength+'%</span></div><div style="height:6px;background:#f0f0f0;border-radius:3px;margin-top:5px;"><div style="height:100%;width:'+m.strength+'%;background:'+color+';border-radius:3px;"></div></div></div><p style="color:#666;font-size:0.85rem;margin-top:8px;">'+m.description+'</p></div>';
             });
             c.innerHTML = html;
         }
 
         function loadAnalytics() {
             var c = document.getElementById("analytics-container");
-            if (!allTrends.length) {
-                fetchTrends(function(trends){ renderAnalytics(trends); });
-            } else {
-                renderAnalytics(allTrends);
-            }
-        }
-
-        function renderAnalytics(trends) {
-            var c = document.getElementById("analytics-container");
-            var sounds = trends.filter(function(t){return t.type==="sound";}).length;
-            var hashtags = trends.filter(function(t){return t.type==="hashtag";}).length;
-            var topics = trends.filter(function(t){return t.type==="topic";}).length;
-            var formats = trends.filter(function(t){return t.type==="format";}).length;
-            var html = '<div class="trend-card"><h3>Total: ' + trends.length + '</h3><p>Sounds: ' + sounds + ' | Hashtags: ' + hashtags + ' | Topics: ' + topics + ' | Formats: ' + formats + '</p></div>';
-            c.innerHTML = html;
+            fetchTrends(function(trends){
+                var sounds = trends.filter(function(t){return t.type==="sound";}).length;
+                var hashtags = trends.filter(function(t){return t.type==="hashtag";}).length;
+                var topics = trends.filter(function(t){return t.type==="topic";}).length;
+                var formats = trends.filter(function(t){return t.type==="format";}).length;
+                c.innerHTML = '<div class="trend-card"><h3>Total: ' + trends.length + '</h3><p>Sounds: ' + sounds + ' | Hashtags: ' + hashtags + ' | Topics: ' + topics + ' | Formats: ' + formats + '</p></div>';
+            });
         }
 
         function loadCalendar() {
             var c = document.getElementById("calendar-container");
             var days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-            if (!allTrends.length) {
-                fetchTrends(function(trends){ renderCalendar(trends); });
-            } else {
-                renderCalendar(allTrends);
-            }
-        }
-
-        function renderCalendar(trends) {
-            var c = document.getElementById("calendar-container");
-            var days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-            var html = "";
-            for (var i=0; i<days.length; i++) {
-                var name = i < trends.length ? trends[i].name : "Rest day";
-                html += '<div class="trend-card"><strong>' + days[i] + '</strong><br><span style="color:#666;font-size:0.85rem;">' + name + '</span></div>';
-            }
-            c.innerHTML = html;
+            fetchTrends(function(trends){
+                var html = "";
+                for (var i=0;i<days.length;i++) {
+                    var name = i < trends.length ? trends[i].name : "Rest day";
+                    html += '<div class="trend-card"><strong>' + days[i] + '</strong><br><span style="color:#666;font-size:0.85rem;">' + name + '</span></div>';
+                }
+                c.innerHTML = html;
+            });
         }
 
         function loadSaved() {
             var c = document.getElementById("saved-container");
-            if (!allTrends.length) {
-                fetchTrends(function(trends){ renderSaved(trends); });
-            } else {
-                renderSaved(allTrends);
-            }
-        }
-
-        function renderSaved(trends) {
-            var c = document.getElementById("saved-container");
-            var saved = trends.filter(function(t){return savedTrends.indexOf(t.id)>-1;});
-            if (!saved.length) { c.innerHTML = "<div class=loading>No saved trends yet</div>"; return; }
-            var html = "";
-            saved.forEach(function(t){
-                html += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="color:#666;">Score: ' + Math.round(t.trend_score) + '</span></div>';
+            fetchTrends(function(trends){
+                var saved = trends.filter(function(t){return savedTrends.indexOf(t.id)>-1;});
+                if (!saved.length) { c.innerHTML = "<div class=loading>No saved trends yet</div>"; return; }
+                var html = "";
+                saved.forEach(function(t){ html += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="color:#666;">Score: ' + Math.round(t.trend_score) + '</span></div>'; });
+                c.innerHTML = html;
             });
-            c.innerHTML = html;
         }
 
         function loadTrendSelect() {
             var select = document.getElementById("trend-select");
-            if (!allTrends.length) {
-                fetchTrends(function(trends){ populateSelect(trends); });
-            } else {
-                populateSelect(allTrends);
-            }
-        }
-
-        function populateSelect(trends) {
-            var select = document.getElementById("trend-select");
-            select.innerHTML = "<option value=>Select trend</option>";
-            trends.forEach(function(t){
-                select.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>';
+            fetchTrends(function(trends){
+                select.innerHTML = "<option value=>Select trend</option>";
+                trends.forEach(function(t){ select.innerHTML += '<option value="' + t.id + '">' + t.name + '</option>'; });
             });
         }
 
@@ -330,9 +315,7 @@
                 {title: trend.name + " challenge", hook:"I tried " + trend.name + " for 24 hours..."}
             ];
             var html = "";
-            ideas.forEach(function(i){
-                html += '<div class="trend-card"><strong>' + i.title + '</strong><p style="color:#667eea;margin-top:5px;">' + i.hook + '</p></div>';
-            });
+            ideas.forEach(function(i){ html += '<div class="trend-card"><strong>' + i.title + '</strong><p style="color:#667eea;margin-top:5px;">' + i.hook + '</p></div>'; });
             c.innerHTML = html;
         }
 
@@ -340,7 +323,6 @@
             event.preventDefault();
             var profile = {username: document.getElementById("username").value, niche: document.getElementById("niche").value, follower_count: 0, engagement_rate: 0.05, goals: [], sub_niches: [], interests: []};
             fetch(API_URL + "/user/create", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(profile)})
-                .then(function(r){ return r.json(); })
                 .then(function(){ showToast("Profile saved!","success"); })
                 .catch(function(){ showToast("Error saving","error"); });
         }
@@ -349,9 +331,7 @@
             event.preventDefault();
             var trend = {trend_name: document.getElementById("trend-name").value, trend_type: document.getElementById("trend-type").value, video_count: parseInt(document.getElementById("video-count").value||"0"), growth_rate: parseFloat(document.getElementById("growth-rate").value||"0")};
             fetch(API_URL + "/admin/trends", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(trend)})
-                .then(function(r){ return r.json(); })
-                .then(function(){ showToast("Trend added!","success"); loadTrends();
-        loadDashboardRegions(); })
+                .then(function(){ showToast("Trend added!","success"); loadTrends(); })
                 .catch(function(){ showToast("Error","error"); });
         }
 
@@ -359,9 +339,49 @@
             showToast("Refreshing...","success");
             fetch(API_URL + "/refresh", {method:"POST"})
                 .then(function(r){ return r.json(); })
-                .then(function(d){ showToast("Updated " + d.count + " trends","success"); loadTrends();
-        loadDashboardRegions(); })
+                .then(function(d){ showToast("Updated " + d.count + " trends","success"); loadTrends(); })
                 .catch(function(){ showToast("Refresh failed","error"); });
+        }
+
+        function loadDashboardRegions() {
+            var select = document.getElementById("region-select");
+            fetch(API_URL + "/trends/regions").then(function(r){return r.json();}).then(function(d){
+                select.innerHTML = "";
+                d.regions.forEach(function(region){ select.innerHTML += '<option value="' + region + '">' + region + '</option>'; });
+                var lang = navigator.language || navigator.userLanguage;
+                var country = "United States";
+                if (lang.indexOf("GB")>=0) country = "United Kingdom";
+                else if (lang.indexOf("ZA")>=0) country = "South Africa";
+                else if (lang.indexOf("NG")>=0) country = "Nigeria";
+                else if (lang.indexOf("KE")>=0) country = "Kenya";
+                else if (lang.indexOf("IN")>=0) country = "India";
+                else if (lang.indexOf("CA")>=0) country = "Canada";
+                else if (lang.indexOf("AU")>=0) country = "Australia";
+                else if (lang.indexOf("BR")>=0) country = "Brazil";
+                else if (lang.indexOf("DE")>=0) country = "Germany";
+                else if (lang.indexOf("FR")>=0) country = "France";
+                select.value = country;
+                loadDashboardLocationTrends();
+            });
+        }
+
+        function loadDashboardLocationTrends() {
+            var region = document.getElementById("region-select").value;
+            if (!region) return;
+            fetch(API_URL + "/trends/by-region?region=" + encodeURIComponent(region))
+                .then(function(r){return r.json();})
+                .then(function(d){
+                    var localC = document.getElementById("local-trends");
+                    var intlC = document.getElementById("international-trends");
+                    localC.innerHTML = "";
+                    intlC.innerHTML = "";
+                    d.local_trends.forEach(function(t){
+                        localC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                    d.international_trends.forEach(function(t){
+                        intlC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
+                    });
+                });
         }
 
         function getStageStyle(stage) {
@@ -378,259 +398,6 @@
             return Math.round(num).toString();
         }
 
-        
-        function showAnalysis(trendId) {
-            var trend = allTrends.find(function(t){ return t.id == trendId; });
-            if (!trend) { showToast("Trend not found", "error"); return; }
-            
-            var growth = trend.growth_rate || 0;
-            var videos = trend.video_count || 0;
-            var competition = trend.competition_level || "Medium";
-            var stage = trend.trend_stage || "Unknown";
-            var type = trend.type || "hashtag";
-            
-            // Generate comment samples based on trend type and niche
-            var comments = generateCommentSamples(trend);
-            var relatability = calculateRelatability(comments);
-            
-            var growthDesc = "";
-            if (growth > 300) growthDesc = "exploding (+" + Math.round(growth) + "% weekly)";
-            else if (growth > 150) growthDesc = "growing very fast (+" + Math.round(growth) + "% weekly)";
-            else if (growth > 50) growthDesc = "growing steadily (+" + Math.round(growth) + "% weekly)";
-            else growthDesc = "growing slowly (+" + Math.round(growth) + "% weekly)";
-            
-            var compDesc = "";
-            if (competition === "Very Low") compDesc = "almost no one is using it";
-            else if (competition === "Low") compDesc = "low competition";
-            else if (competition === "Medium") compDesc = "moderate competition";
-            else if (competition === "High") compDesc = "high competition";
-            else compDesc = "very high competition";
-            
-            var stageAdvice = "";
-            if (stage.indexOf("Early") >= 0) stageAdvice = "This is a brand-new trend. Jump on it NOW before others catch on.";
-            else if (stage.indexOf("Emerging") >= 0) stageAdvice = "This trend is gaining momentum. Post within 24-48 hours for best results.";
-            else if (stage.indexOf("Rising") >= 0) stageAdvice = "This trend is popular but still growing. You can still get good reach, but competition is increasing.";
-            else if (stage.indexOf("Peak") >= 0) stageAdvice = "This trend is saturated. You need a strong unique angle.";
-            else stageAdvice = "This trend is declining. Not recommended unless you have a very unique twist.";
-            
-            var typeAdvice = "";
-            if (type === "sound") typeAdvice = "Use the exact sound without modifications. The TikTok algorithm heavily favors videos using trending audio.";
-            else if (type === "hashtag") typeAdvice = "Include the hashtag in your caption. Use it naturally alongside 2-3 related niche hashtags.";
-            else if (type === "topic") typeAdvice = "Create content that matches this topic but add your personal experience or expertise.";
-            else typeAdvice = "Match the format exactly. This format is trending because viewers love the structure.";
-            
-            var beatAdvice = "";
-            if (growth > 200 && (competition === "Very Low" || competition === "Low")) {
-                beatAdvice = "This is a golden opportunity: high growth with low competition. Post immediately, and make it high quality.";
-            } else if (growth > 100 && competition === "Medium") {
-                beatAdvice = "Good opportunity. To beat others, use a stronger hook in the first 1-2 seconds and add an unexpected element.";
-            } else if (competition === "High" || competition === "Very High") {
-                beatAdvice = "Competition is tough. You need a unique angle, better production, and a more engaging hook than existing videos.";
-            } else {
-                beatAdvice = "Moderate opportunity. Focus on authenticity and a personal twist to stand out.";
-            }
-            
-            var modal = document.createElement("div");
-            modal.style.position = "fixed";
-            modal.style.top = "0";
-            modal.style.left = "0";
-            modal.style.width = "100%";
-            modal.style.height = "100%";
-            modal.style.background = "rgba(0,0,0,0.5)";
-            modal.style.zIndex = "9999";
-            modal.className = "modal-overlay";
-            modal.style.display = "flex";
-            modal.style.alignItems = "center";
-            modal.style.justifyContent = "center";
-            modal.innerHTML = '<div style="background:white;border-radius:12px;padding:2rem;max-width:650px;width:90%;max-height:85vh;overflow-y:auto;">' +
-                '<h2 style="margin-bottom:1rem;">Trend Analysis: ' + trend.name + '</h2>' +
-                '<div id="analysis-content"></div>' +
-                '<button onclick="this.closest('.modal-overlay').remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>' +
-                '</div>';
-            document.body.appendChild(modal);
-            
-            var html = "";
-            html += "<div style=\"background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-            html += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">📈 Why It's Trending</h3>";
-            html += "<p style=\"color:#555;\">This trend is " + growthDesc + " with " + compDesc + ". " + stageAdvice + "</p>";
-            html += "</div>";
-            
-            html += "<div style=\"background:#f0fdf4;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-            html += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">💡 What Makes It Unique</h3>";
-            html += "<p style=\"color:#555;\">" + typeAdvice + "</p>";
-            html += "</div>";
-            
-            html += "<div style=\"background:#fef3c7;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-            html += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">🏆 How to Beat These Videos</h3>";
-            html += "<p style=\"color:#555;\">" + beatAdvice + "</p>";
-            html += "</div>";
-            
-            // Comments section
-            html += "<div style=\"background:#e0f2fe;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-            html += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">💬 What Commenters Are Saying</h3>";
-            comments.forEach(function(c) {
-                html += "<div style=\"background:white;padding:0.6rem;border-radius:6px;margin-bottom:0.4rem;font-size:0.9rem;color:#555;\">" + c + "</div>";
-            });
-            html += "</div>";
-            
-            // Relatability score
-            html += "<div style=\"background:#fdf2f8;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-            html += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">❤️ Relatability Score</h3>";
-            html += "<div style=\"font-size:2rem;font-weight:bold;color:" + (relatability > 70 ? '#10b981' : relatability > 50 ? '#f59e0b' : '#ef4444') + "\">" + relatability + "%</div>";
-            html += "<p style=\"color:#555;\">Based on the emotional connection in the comments, this trend is " + (relatability > 70 ? 'highly relatable' : relatability > 50 ? 'moderately relatable' : 'not very relatable') + " to your audience.</p>";
-            html += "</div>";
-            
-            document.getElementById("analysis-content").innerHTML = html;
-            
-            // Fetch and display top locations
-            fetch(API_URL + "/trends/" + trendId + "/locations")
-                .then(function(r){ return r.json(); })
-                .then(function(locData){
-                    var locHtml = "<div style=\"background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;\">";
-                    locHtml += "<h3 style=\"color:#333;margin-bottom:0.5rem;\">📍 Top Trending Locations</h3>";
-                    locData.top_locations.forEach(function(loc){
-                        locHtml += "<span style=\"display:inline-block;background:#e0e7ff;color:#4f46e5;padding:3px 10px;border-radius:15px;margin:3px;font-size:0.85rem;\">" + loc + "</span>";
-                    });
-                    if (locData.is_international) {
-                        locHtml += "<p style=\"color:#10b981;margin-top:8px;\">🌍 This is an international trend</p>";
-                    } else {
-                        locHtml += "<p style=\"color:#f59e0b;margin-top:8px;\">📍 This is a local/regional trend</p>";
-                    }
-                    locHtml += "</div>";
-                    var analysisContent = document.getElementById("analysis-content");
-                    analysisContent.innerHTML += locHtml;
-                })
-                .catch(function(){});
-        }
-        
-        function generateCommentSamples(trend) {
-            var comments = [];
-            var name = trend.name.replace('#', '').trim();
-            var type = trend.type;
-            var niche = name.toLowerCase();
-            
-            // Generic comments that adapt to trend type
-            if (type === "sound") {
-                comments = ["This sound is stuck in my head 😂", "I've seen this sound everywhere today", "The beat drop is insane 🔥", "Using this for my next video!", "This sound makes every video better"];
-            } else if (type === "hashtag") {
-                comments = ["I tried this and it actually works!", "So relatable omg", "This is exactly what I needed to see", "I've been doing this wrong my whole life", "Can't believe this is trending 😱"];
-            } else if (type === "topic") {
-                comments = ["This is literally me every day", "I feel seen right now", "Why is this so accurate?", "This made my day", "I needed this advice"];
-            } else {
-                comments = ["This format is genius", "I love how creative everyone is", "How do people come up with this?", "The transition was so smooth", "I need to try this"];
-            }
-            
-            // Add niche-specific if trend name contains certain words
-            if (niche.includes("fitness") || niche.includes("workout") || niche.includes("gym")) {
-                comments = ["I've been doing this wrong for years", "This actually gave me results in a week", "My gym buddy swears by this", "Saving this for my next workout"];
-            } else if (niche.includes("food") || niche.includes("recipe") || niche.includes("cook")) {
-                comments = ["Made this tonight, family loved it", "This recipe is so easy", "Better than my mom's 😂", "Adding this to my meal plan"];
-            } else if (niche.includes("beauty") || niche.includes("makeup") || niche.includes("skincare")) {
-                comments = ["My skin has never looked better", "This product is a game changer", "Tried this and got so many compliments", "Buying this right now"];
-            } else if (niche.includes("gaming") || niche.includes("game")) {
-                comments = ["This game is addicting", "I can't stop playing", "The graphics are insane", "Finally a game worth my time"];
-            } else if (niche.includes("travel") || niche.includes("vacation")) {
-                comments = ["Adding this to my bucket list", "I need a vacation now", "This view is unreal", "Booking tickets ASAP"];
-            } else if (niche.includes("tech") || niche.includes("ai")) {
-                comments = ["This is the future", "How did I live without this?", "Mind blown 🤯", "Trying this today"];
-            }
-            
-            // Shuffle and take 4
-            comments = comments.slice(0, 4);
-            return comments;
-        }
-        
-        function calculateRelatability(comments) {
-            var score = 0;
-            comments.forEach(function(c) {
-                if (c.includes("I") || c.includes("my") || c.includes("me")) score += 15;
-                if (c.includes("this") || c.includes("that")) score += 10;
-                if (c.includes("love") || c.includes("need") || c.includes("want")) score += 10;
-                if (c.includes("😂") || c.includes("🔥") || c.includes("😱")) score += 5;
-            });
-            return Math.min(95, score + 40); // base 40 + factors
-        }
-        
-        
-        function loadRegions() {
-            var select = document.getElementById("region-select");
-            fetch(API_URL + "/trends/regions").then(function(r){return r.json();}).then(function(d){
-                select.innerHTML = "";
-                d.regions.forEach(function(region){
-                    select.innerHTML += '<option value="' + region + '">' + region + '</option>';
-                });
-                // Default to first
-                if (d.regions.length) loadLocationTrends();
-            });
-        }
-        
-        function loadLocationTrends() {
-            var region = document.getElementById("region-select").value;
-            if (!region) return;
-            fetch(API_URL + "/trends/by-region?region=" + encodeURIComponent(region))
-                .then(function(r){return r.json();})
-                .then(function(d){
-                    var localC = document.getElementById("local-trends");
-                    var intlC = document.getElementById("international-trends");
-                    localC.innerHTML = "";
-                    intlC.innerHTML = "";
-                    
-                    d.local_trends.forEach(function(t){
-                        localC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
-                    });
-                    
-                    d.international_trends.forEach(function(t){
-                        intlC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
-                    });
-                });
-        }
-        
-        function loadDashboardRegions() {
-            var select = document.getElementById("dashboard-region-select");
-            fetch(API_URL + "/trends/regions").then(function(r){return r.json();}).then(function(d){
-                select.innerHTML = "";
-                d.regions.forEach(function(region){
-                    select.innerHTML += '<option value="' + region + '">' + region + '</option>';
-                });
-                // Try to auto-detect from browser language
-                var lang = navigator.language || navigator.userLanguage;
-                var country = "United States";
-                if (lang.indexOf("GB") >= 0) country = "United Kingdom";
-                else if (lang.indexOf("ZA") >= 0) country = "South Africa";
-                else if (lang.indexOf("NG") >= 0) country = "Nigeria";
-                else if (lang.indexOf("KE") >= 0) country = "Kenya";
-                else if (lang.indexOf("IN") >= 0) country = "India";
-                else if (lang.indexOf("CA") >= 0) country = "Canada";
-                else if (lang.indexOf("AU") >= 0) country = "Australia";
-                else if (lang.indexOf("BR") >= 0) country = "Brazil";
-                else if (lang.indexOf("DE") >= 0) country = "Germany";
-                else if (lang.indexOf("FR") >= 0) country = "France";
-                select.value = country;
-                loadDashboardLocationTrends();
-            });
-        }
-        
-        function loadDashboardLocationTrends() {
-            var region = document.getElementById("dashboard-region-select").value;
-            if (!region) return;
-            fetch(API_URL + "/trends/by-region?region=" + encodeURIComponent(region))
-                .then(function(r){return r.json();})
-                .then(function(d){
-                    var localC = document.getElementById("local-trends-dashboard");
-                    var intlC = document.getElementById("international-trends-dashboard");
-                    localC.innerHTML = "";
-                    intlC.innerHTML = "";
-                    
-                    d.local_trends.forEach(function(t){
-                        localC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
-                    });
-                    
-                    d.international_trends.forEach(function(t){
-                        intlC.innerHTML += '<div class="trend-card"><strong>' + t.name + '</strong><br><span style="font-size:0.85rem;color:#666;">Score: ' + Math.round(t.trend_score) + ' | Growth: +' + Math.round(t.growth_rate) + '%</span><br><span style="font-size:0.8rem;color:#10b981;">Top locations: ' + t.top_locations.slice(0,3).join(', ') + '</span></div>';
-                    });
-                });
-        }
-        
         function showToast(msg, type) {
             var toast = document.createElement("div");
             toast.className = "toast " + type;
@@ -639,14 +406,6 @@
             setTimeout(function(){ toast.remove(); }, 3000);
         }
 
-        
-        document.addEventListener("click", function(e) {
-            if (e.target.classList && e.target.classList.contains("modal-overlay")) {
-                e.target.remove();
-            }
-        });
-
-        // initial load
         loadTrends();
         loadDashboardRegions();
     </script>

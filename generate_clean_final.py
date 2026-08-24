@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿html = '''<!DOCTYPE html>
 <html>
 <head>
     <title>TrendPilot</title>
@@ -210,7 +210,7 @@
             modal.className = "modal-content";
             modal.innerHTML = '<h2 style="margin-bottom:1rem;">Trend Analysis: ' + trend.name + '</h2>' +
                 '<div id="analysis-content">Loading...</div>' +
-                '<button onclick="this.closest(\'.modal-overlay\').remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>';
+                '<button onclick="this.closest(\\'.modal-overlay\\').remove()" style="margin-top:1rem;background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Close</button>';
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
             overlay.addEventListener("click", function(e) {
@@ -227,7 +227,7 @@
             var typeAdvice = type === "sound" ? "Use the exact sound without modifications." : type === "hashtag" ? "Include the hashtag naturally with 2-3 niche hashtags." : type === "topic" ? "Add your personal experience to this topic." : "Match the format exactly.";
             var beatAdvice = growth > 200 && (competition === "Very Low" || competition === "Low") ? "Golden opportunity: post immediately with high quality." : growth > 100 && competition === "Medium" ? "Good opportunity. Use stronger hook." : competition === "High" || competition === "Very High" ? "Tough competition. Need unique angle and better hook." : "Moderate opportunity. Focus on authenticity.";
 
-            var html = '<div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>Why It\'s Trending</h3><p style="color:#555;">This trend is ' + growthDesc + ' with ' + compDesc + '. ' + stageAdvice + '</p></div>';
+            var html = '<div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>Why It\\'s Trending</h3><p style="color:#555;">This trend is ' + growthDesc + ' with ' + compDesc + '. ' + stageAdvice + '</p></div>';
             html += '<div style="background:#f0fdf4;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>What Makes It Unique</h3><p style="color:#555;">' + typeAdvice + '</p></div>';
             html += '<div style="background:#fef3c7;padding:1rem;border-radius:8px;margin-bottom:1rem;"><h3>How to Beat</h3><p style="color:#555;">' + beatAdvice + '</p></div>';
             document.getElementById("analysis-content").innerHTML = html;
@@ -410,4 +410,12 @@
         loadDashboardRegions();
     </script>
 </body>
-</html>
+</html>'''
+
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+with open('frontend/index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print("Clean complete index.html generated")
