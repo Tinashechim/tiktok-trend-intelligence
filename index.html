@@ -34,7 +34,7 @@
             -webkit-text-fill-color: transparent;
         }
         .nav-links { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-        .nav-link {
+        .nav-link {flex-shrink:0;
             padding: 0.4rem 0.7rem;
             border: none;
             background: none;
@@ -187,7 +187,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">TrendPilot</div>
-            <div class="nav-links">
+            <div class="nav-links" style="overflow-x:auto;flex-wrap:nowrap;white-space:nowrap;max-width:100%;">
                 <button class="nav-link active" data-page="dashboard">Dashboard</button>
                 <button class="nav-link" data-page="admin">Add Trends</button>
                 <button class="nav-link" data-page="manage">Manage</button>
