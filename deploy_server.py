@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime, JSON
 import os
 
-# Database setup
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///trend_intelligence.db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -41,7 +40,6 @@ class UserProfile(Base):
     follower_count = Column(Integer, default=0)
     engagement_rate = Column(Float, default=0.05)
 
-# Create tables
 Base.metadata.create_all(engine)
 
 # Seed data if empty
@@ -62,7 +60,7 @@ if db.query(Trend).count() == 0:
     db.commit()
 db.close()
 
-app = FastAPI(title="TikTok Trend Intelligence API", version="5.0.0")
+app = FastAPI(title="TikTok Trend Intelligence API", version="6.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,6 +69,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class TrendCreate(BaseModel):
+    trend_type: str
+    trend_name: str
+    video_count: int = 0
+    growth_rate: float = 0.0
+    engagement_rate: float = 0.0
+    competition_level: str = "Medium"
+    trend_stage: str = "📈 Rising"
+
+class TrendUpdate(BaseModel):
+    trend_type: Optional[str] = None
+    trend_name: Optional[str] = None
+    video_count: Optional[int] = None
+    growth_rate: Optional[float] = None
+    engagement_rate: Optional[float] = None
+    competition_level: Optional[str] = None
+    trend_stage: Optional[str] = None
 
 class UserProfileCreate(BaseModel):
     username: str
@@ -90,7 +106,7 @@ def get_db():
 
 @app.get("/")
 async def root():
-    return {"message": "TikTok Trend Intelligence API", "status": "active"}
+    return {"message": "TikTok Trend Intelligence API", "status": "active", "version": "6.0.0"}
 
 @app.get("/api/health")
 async def health():
@@ -100,6 +116,51 @@ async def health():
 async def get_trends(db=Depends(get_db)):
     trends = db.query(Trend).filter(Trend.expires_at > datetime.utcnow()).order_by(Trend.trend_score.desc()).all()
     return [{"id": t.id, "type": t.trend_type, "name": t.trend_name, "trend_score": t.trend_score, "growth_rate": t.growth_rate, "competition_level": t.competition_level, "trend_stage": t.trend_stage, "video_count": t.video_count, "engagement_rate": t.engagement_rate} for t in trends]
+
+@app.get("/api/trends/all")
+async def get_all_trends(db=Depends(get_db)):
+    trends = db.query(Trend).order_by(Trend.trend_score.desc()).all()
+    return [{"id": t.id, "type": t.trend_type, "name": t.trend_name, "trend_score": t.trend_score, "growth_rate": t.growth_rate, "competition_level": t.competition_level, "trend_stage": t.trend_stage, "video_count": t.video_count, "engagement_rate": t.engagement_rate} for t in trends]
+
+@app.post("/api/admin/trends")
+async def create_trend(trend: TrendCreate, db=Depends(get_db)):
+    new_trend = Trend(
+        trend_type=trend.trend_type,
+        trend_name=trend.trend_name,
+        video_count=trend.video_count,
+        growth_rate=trend.growth_rate,
+        engagement_rate=trend.engagement_rate,
+        competition_level=trend.competition_level,
+        trend_stage=trend.trend_stage,
+        trend_score=min(round(trend.growth_rate / 5 + trend.engagement_rate / 1000, 2), 100),
+        expires_at=datetime.utcnow() + timedelta(hours=24)
+    )
+    db.add(new_trend)
+    db.commit()
+    db.refresh(new_trend)
+    return {"id": new_trend.id, "message": "Trend created successfully"}
+
+@app.put("/api/admin/trends/{trend_id}")
+async def update_trend(trend_id: int, trend: TrendUpdate, db=Depends(get_db)):
+    existing = db.query(Trend).filter_by(id=trend_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Trend not found")
+    
+    for key, value in trend.dict(exclude_unset=True).items():
+        setattr(existing, key, value)
+    
+    db.commit()
+    return {"message": "Trend updated successfully"}
+
+@app.delete("/api/admin/trends/{trend_id}")
+async def delete_trend(trend_id: int, db=Depends(get_db)):
+    existing = db.query(Trend).filter_by(id=trend_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Trend not found")
+    
+    db.delete(existing)
+    db.commit()
+    return {"message": "Trend deleted successfully"}
 
 @app.get("/api/analytics/overview")
 async def get_analytics(db=Depends(get_db)):
