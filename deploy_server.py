@@ -1,4 +1,5 @@
 ﻿import os
+import stripe
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -12,7 +13,7 @@ import time
 from collections import Counter
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -22,6 +23,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///trend_intelligence.db")
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_hex(32))
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+stripe.api_key = STRIPE_SECRET_KEY
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -778,6 +782,58 @@ async def alert_status():
 class UpgradeRequest(BaseModel):
     user_id: int
     promo_code: str = ""
+
+
+class StripeCheckoutRequest(BaseModel):
+    user_id: int
+
+@app.post("/api/premium/create-checkout")
+async def create_checkout(request: StripeCheckoutRequest, db=Depends(get_db)):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": "TrendPilot Premium"},
+                    "unit_amount": 999,  # .99
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url="https://tinashechim.github.io/tiktok-trend-intelligence/?premium=success",
+            cancel_url="https://tinashechim.github.io/tiktok-trend-intelligence/?premium=cancel",
+            metadata={"user_id": str(user.id)}
+        )
+        return {"checkout_url": session.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/premium/webhook")
+async def stripe_webhook(request: Request, db=Depends(get_db)):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Webhook error")
+    
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("metadata", {}).get("user_id")
+        if user_id:
+            user = db.query(User).filter(User.id == int(user_id)).first()
+            if user:
+                user.is_premium = True
+                db.commit()
+    return {"message": "Webhook received"}
+
 
 @app.post("/api/premium/upgrade")
 async def upgrade_to_premium(request: UpgradeRequest, db=Depends(get_db)):
