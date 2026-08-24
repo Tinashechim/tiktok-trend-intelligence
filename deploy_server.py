@@ -391,6 +391,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_premium = Column(Boolean, default=False)
 
 class UserProfileCreate(BaseModel):
     username: str
@@ -772,6 +773,35 @@ async def alert_status():
         return {"subscribed_count": len(alerts)}
     except:
         return {"subscribed_count": 0}
+
+
+class UpgradeRequest(BaseModel):
+    user_id: int
+    promo_code: str = ""
+
+@app.post("/api/premium/upgrade")
+async def upgrade_to_premium(request: UpgradeRequest, db=Depends(get_db)):
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Simple promo code for testing
+    if request.promo_code.upper() == "TRENDPILOT2026":
+        user.is_premium = True
+        db.commit()
+        return {"message": "Premium activated", "is_premium": True}
+    else:
+        # For demo, allow any code or no code to upgrade (free)
+        user.is_premium = True
+        db.commit()
+        return {"message": "Premium activated (demo)", "is_premium": True}
+
+@app.get("/api/premium/status/{user_id}")
+async def premium_status(user_id: int, db=Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user_id": user.id, "is_premium": user.is_premium}
 
 @app.post("/api/admin/trends")
 async def create_trend(trend: TrendCreate, db=Depends(get_db)):
