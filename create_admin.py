@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+﻿html_file = open('index.html', 'w', encoding='utf-8')
+html_file.write('''<!DOCTYPE html>
 <html>
 <head>
     <title>TrendPilot - TikTok Intelligence</title>
@@ -427,4 +428,6 @@
         loadTrends();
     </script>
 </body>
-</html>
+</html>''')
+html_file.close()
+print("Admin panel created!")
