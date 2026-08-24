@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrendPilot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 0.5rem 1rem; }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: #667eea; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 0.3rem; overflow-x: auto; flex: 1; }
+        .nav-link { padding: 0.5rem 0.8rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #666; border-radius: 6px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f0f0; }
+        .nav-link.active { background: #667eea; color: white; }
+        .main-container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .page-header { margin-bottom: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #333; }
+        .trends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+        .trend-card { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .trend-stage { display: inline-block; padding: 3px 8px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; margin-bottom: 8px; }
+        .trend-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .trend-type { background: #e0e7ff; color: #4f46e5; padding: 3px 8px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; }
+        .trend-score { font-size: 1.1rem; font-weight: bold; color: #667eea; }
+        .trend-name { font-weight: bold; color: #333; margin-bottom: 8px; }
+        .trend-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #f8fafc; padding: 8px; border-radius: 8px; }
+        .metric { text-align: center; }
+        .metric-value { font-weight: bold; font-size: 0.85rem; }
+        .metric-label { font-size: 0.7rem; color: #666; }
+        .loading { text-align: center; padding: 2rem; color: #666; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 0.8rem 1.2rem; border-radius: 8px; color: white; font-weight: bold; z-index: 1000; }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+    
+        .tooltip {
+            position: fixed;
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            line-height: 1.4;
+            display: none;
+        }
+        [data-tooltip] { cursor: help; }
+</style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">TrendPilot</div>
+            <div class="nav-links">
+                <button class="nav-link active" data-page="dashboard" data-tooltip="View all current trending content ranked by opportunity score">Dashboard</button>
+                
+                <button class="nav-link" data-page="movements" data-tooltip="Detected movement and gesture trends">Movements</button>
+                <button class="nav-link" data-page="analytics" data-tooltip="See breakdown of trends by type, score, and growth">Analytics</button>
+                <button class="nav-link" data-page="calendar" data-tooltip="Weekly content plan with recommended posting days">Calendar</button>
+                <button class="nav-link" data-page="saved" data-tooltip="Your bookmarked trends for future reference">Saved</button>
+                <button class="nav-link" data-page="ideas" data-tooltip="Generate video content ideas from trending topics">Ideas</button>
+                <button class="nav-link" data-page="profile" data-tooltip="Set your niche for personalized recommendations">Profile</button>
+                <button class="nav-link" data-page="admin" data-tooltip="Manually add trends you find on TikTok">Add</button>
+                <button class="nav-link" onclick="refreshTrends()" data-tooltip="Fetch latest trends from multiple sources">Refresh</button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main-container">
+        <div id="dashboard" class="page active">
+            <div class="page-header"><h1>All Trends</h1></div>
+            <div id="trends-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="movements" class="page">
+            <div class="page-header"><h1>Movement Trends</h1><p>Automatically detected gestures and movements</p></div>
+            <div id="movements-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="analytics" class="page">
+            <div class="page-header"><h1>Analytics</h1></div>
+            <div id="analytics-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="calendar" class="page">
+            <div class="page-header"><h1>Calendar</h1></div>
+            <div id="calendar-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="saved" class="page">
+            <div class="page-header"><h1>Saved</h1></div>
+            <div id="saved-container" class="trends-grid"><div class="loading">Loading...</div></div>
+        </div>
+        <div id="ideas" class="page">
+            <div class="page-header"><h1>Content Ideas</h1></div>
+            <select id="trend-select" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;"><option value="">Select trend</option></select>
+            <button onclick="generateIdeas()" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Generate</button>
+            <div id="ideas-container"></div>
+        </div>
+        <div id="profile" class="page">
+            <div class="page-header"><h1>Profile</h1></div>
+            <div style="background:white;padding:1rem;border-radius:10px;max-width:400px;">
+                <form onsubmit="saveProfile(event)">
+                    <input type="text" id="username" placeholder="Username" required style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <select id="niche" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                        <option value="fitness">Fitness</option>
+                        <option value="beauty">Beauty</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="food">Food</option>
+                        <option value="gaming">Gaming</option>
+                        <option value="tech">Tech</option>
+                        <option value="music">Music</option>
+                        <option value="travel">Travel</option>
+                    </select>
+                    <button type="submit" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Save</button>
+                </form>
+            </div>
+        </div>
+        <div id="admin" class="page">
+            <div class="page-header"><h1>Add Trend</h1></div>
+            <div style="background:white;padding:1rem;border-radius:10px;max-width:400px;">
+                <form onsubmit="addTrend(event)">
+                    <input type="text" id="trend-name" placeholder="Trend name" required style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <select id="trend-type" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                        <option value="sound">Sound</option>
+                        <option value="hashtag">Hashtag</option>
+                        <option value="topic">Topic</option>
+                        <option value="format">Format</option>
+                    </select>
+                    <input type="number" id="video-count" placeholder="Video count" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <input type="number" id="growth-rate" placeholder="Growth rate %" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.5rem;">
+                    <button type="submit" style="background:#667eea;color:white;padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;">Add</button>
+                </form>
+            </div>
+        </div>
+        
+        </div>
+    </div>
+    
+    <script>
+        var savedTrends = JSON.parse(localStorage.getItem("savedTrends") || "[]");
+        var API_URL = "https://tiktok-trend-intelligence.onrender.com/api";
+        
+        document.querySelectorAll(".nav-link[data-page]").forEach(function(link) {
+            link.addEventListener("click", function() {
+                var page = this.dataset.page;
+                document.querySelectorAll(".nav-link").forEach(function(l) { l.classList.remove("active"); });
+                this.classList.add("active");
+                document.querySelectorAll(".page").forEach(function(p) { p.classList.remove("active"); });
+                document.getElementById(page).classList.add("active");
+                if (page === "dashboard") 
+        // Tooltip System
+        var tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        document.body.appendChild(tooltip);
+        
+        document.addEventListener("mouseover", function(e) {
+            var target = e.target.closest("[data-tooltip]");
+            if (target) {
+                tooltip.textContent = target.getAttribute("data-tooltip");
+                tooltip.style.display = "block";
+                var rect = target.getBoundingClientRect();
+                var tr = tooltip.getBoundingClientRect();
+                var left = rect.left + (rect.width / 2) - (tr.width / 2);
+                var top = rect.top - tr.height - 10;
+                if (left < 10) left = 10;
+                if (left + tr.width > window.innerWidth - 10) left = window.innerWidth - tr.width - 10;
+                if (top < 10) top = rect.bottom + 10;
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            }
+        });
+        
+        document.addEventListener("mouseout", function(e) {
+            if (e.target.closest("[data-tooltip]")) tooltip.style.display = "none";
+        });
+        
+loadTrends();
+                
+                if (page === "movements") loadMovements();
+                if (page === "analytics") loadAnalytics();
+                if (page === "calendar") loadCalendar();
+                if (page === "saved") loadSaved();
+                if (page === "ideas") { loadTrendSelect(); }
+                if (page === "profile") {}
+            });
+        });
+        
+        function loadTrendSelect() {
+            var select = document.getElementById("trend-select");
+            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
+                select.innerHTML = "<option value=>Select</option>";
+                trends.forEach(function(t){ select.innerHTML += "<option value=" + t.id + ">" + t.name + "</option>"; });
+            });
+        }
+        
+        function loadTrends() {
+            var container = document.getElementById("trends-container");
+            container.innerHTML = "<div class=loading>Loading...</div>";
+            fetch(API_URL + "/trends/current")
+                .then(function(r) { return r.json(); })
+                .then(function(trends) {
+                    if (!trends.length) { container.innerHTML = "<div class=loading>No trends</div>"; return; }
+                    var html = "";
+                    trends.forEach(function(t) {
+                        var stageStyle = getStageStyle(t.trend_stage);
+                        html += "<div class=trend-card>";
+                        html += "<span class=trend-stage style=" + stageStyle + ">" + t.trend_stage + "</span>";
+                        html += "<div class=trend-header>";
+                        html += "<span class=trend-type>" + t.type + "</span>";
+                        html += "<span class=trend-score>" + Math.round(t.trend_score) + "/100</span>";
+                        html += "</div>";
+                        html += "<div class=trend-name>" + t.name + "</div>";
+                        html += "<div class=trend-metrics>";
+                        html += "<div class=metric><div class=metric-value>" + (t.growth_rate > 0 ? "+" : "") + Math.round(t.growth_rate) + "%</div><div class=metric-label>Growth</div></div>";
+                        html += "<div class=metric><div class=metric-value>" + t.competition_level + "</div><div class=metric-label>Competition</div></div>";
+                        html += "<div class=metric><div class=metric-value>" + formatNumber(t.video_count) + "</div><div class=metric-label>Videos</div></div>";
+                        html += "</div></div>";
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(function() { container.innerHTML = "<div class=loading>Error loading trends</div>"; });
+        }
+        
+        
+        
+        
+        
+        function refreshTrends() {
+            showToast("Fetching trends...", "success");
+            fetch(API_URL + "/refresh", { method: "POST" })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { showToast("Updated " + d.count + " trends!", "success"); loadTrends(); })
+                .catch(function() { showToast("Error refreshing", "error"); });
+        }
+        
+        function getStageStyle(stage) {
+            if (stage.indexOf("Early") >= 0) return "background:#fef3c7;color:#d97706;";
+            if (stage.indexOf("Emerging") >= 0) return "background:#fee2e2;color:#dc2626;";
+            if (stage.indexOf("Rising") >= 0) return "background:#e0e7ff;color:#4f46e5;";
+            if (stage.indexOf("Peak") >= 0) return "background:#d1fae5;color:#059669;";
+            return "background:#f3f4f6;color:#6b7280;";
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+            if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+            return Math.round(num).toString();
+        }
+        
+        function loadAnalytics() {
+            var c = document.getElementById("analytics-container");
+            c.innerHTML = "<div class=loading>Loading...</div>";
+            fetch(API_URL + "/analytics/overview").then(function(r){return r.json();}).then(function(d){
+                var html = "<div style=background:white;padding:1rem;border-radius:10px;grid-column:1/-1;>";
+                html += "<h3>Total Trends: " + d.total_trends + "</h3>";
+                html += "<p>Sounds: " + d.by_type.sounds + " | Hashtags: " + d.by_type.hashtags + " | Topics: " + d.by_type.topics + "</p>";
+                html += "<p>Average Growth: " + d.average_growth + "%</p>";
+                html += "</div>";
+                c.innerHTML = html;
+            }).catch(function(){ c.innerHTML = "<div class=loading>Error loading analytics</div>"; });
+        }
+        
+        function loadCalendar() {
+            var c = document.getElementById("calendar-container");
+            c.innerHTML = "<div class=loading>Loading...</div>";
+            fetch(API_URL + "/calendar/weekly-plan").then(function(r){return r.json();}).then(function(d){
+                var html = "";
+                d.weekly_plan.forEach(function(day){
+                    html += "<div style=background:white;padding:1rem;border-radius:10px;>";
+                    html += "<strong>" + day.day + "</strong><br>";
+                    html += "<span style=font-size:0.85rem;color:#666;>" + day.trend_name + "</span>";
+                    html += "</div>";
+                });
+                c.innerHTML = html;
+            }).catch(function(){ c.innerHTML = "<div class=loading>Error loading calendar</div>"; });
+        }
+        
+        function loadSaved() {
+            var c = document.getElementById("saved-container");
+            c.innerHTML = "<div class=loading>Loading...</div>";
+            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
+                var saved = trends.filter(function(t){return savedTrends.indexOf(t.id)!==-1;});
+                if (!saved.length) { c.innerHTML = "<div class=loading>No saved trends</div>"; return; }
+                var html = "";
+                saved.forEach(function(t){
+                    html += "<div style=background:white;padding:1rem;border-radius:10px;><strong>" + t.name + "</strong></div>";
+                });
+                c.innerHTML = html;
+            });
+        }
+        
+        function generateIdeas() {
+            var id = document.getElementById("trend-select").value;
+            if (!id) { showToast("Select a trend", "error"); return; }
+            var c = document.getElementById("ideas-container");
+            c.innerHTML = "<div class=loading>Generating...</div>";
+            fetch(API_URL + "/trends/current").then(function(r){return r.json();}).then(function(trends){
+                var trend = trends.find(function(t){return t.id==id;});
+                if (trend) {
+                    c.innerHTML = "<div style=background:white;padding:1rem;border-radius:10px;><strong>How to use " + trend.name + "</strong><p style=color:#667eea;>You won't believe this trick!</p></div>";
+                }
+            });
+        }
+        
+        function saveProfile(event) {
+            event.preventDefault();
+            var profile = {username: document.getElementById("username").value, niche: document.getElementById("niche").value, follower_count: 0, engagement_rate: 0.05, goals: [], sub_niches: [], interests: []};
+            fetch(API_URL + "/user/create", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(profile)})
+                .then(function(){ showToast("Saved!", "success"); });
+        }
+        
+        function addTrend(event) {
+            event.preventDefault();
+            var trend = {trend_name: document.getElementById("trend-name").value, trend_type: document.getElementById("trend-type").value, video_count: parseInt(document.getElementById("video-count").value||"0"), growth_rate: parseFloat(document.getElementById("growth-rate").value||"0")};
+            fetch(API_URL + "/admin/trends", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(trend)})
+                .then(function(){ showToast("Added!", "success"); loadTrends(); });
+        }
+        
+        function loadMovements() {
+            var c = document.getElementById("movements-container");
+            c.innerHTML = "<div class=loading>Detecting movement patterns...</div>";
+            fetch(API_URL + "/trends/movement").then(function(r){return r.json();}).then(function(d){
+                if (!d.movement_trends || !d.movement_trends.length) {
+                    c.innerHTML = "<div class=loading>No movement trends detected</div>";
+                    return;
+                }
+                var html = "";
+                d.movement_trends.forEach(function(m){
+                    var strengthColor = m.trend_strength > 60 ? "#10b981" : m.trend_strength > 40 ? "#f59e0b" : "#ef4444";
+                    html += "<div style=background:white;padding:1rem;border-radius:10px;>";
+                    html += "<strong style=font-size:1.1rem;>" + m.pattern.replace(/_/g, " ") + "</strong>";
+                    html += "<div style=margin-top:8px;>";
+                    html += "<div style=display:flex;justify-content:space-between;font-size:0.85rem;>";
+                    html += "<span>Trend Strength</span>";
+                    html += "<span style=font-weight:bold;color:" + strengthColor + ";>" + m.trend_strength + "%</span>";
+                    html += "</div>";
+                    html += "<div style=height:6px;background:#f0f0f0;border-radius:3px;margin-top:5px;overflow:hidden;>";
+                    html += "<div style=height:100%;width:" + m.trend_strength + "%;background:" + strengthColor + ";border-radius:3px;></div>";
+                    html += "</div></div>";
+                    html += "<p style=color:#666;font-size:0.85rem;margin-top:8px;>" + m.description + "</p>";
+                    html += "</div>";
+                });
+                c.innerHTML = html;
+            }).catch(function(){ c.innerHTML = "<div class=loading>Error detecting movements</div>"; });
+        }
+        
+        function showToast(msg, type) {
+            var toast = document.createElement("div");
+            toast.className = "toast " + type;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        }
+        
+        loadTrends();
+    </script>
+</body>
+</html>
