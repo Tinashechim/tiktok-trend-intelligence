@@ -18,8 +18,8 @@ AI-powered trend detection and content generation platform.
 
 ## Structure
 
-- ackend/ – FastAPI backend, database, ML models, detectors
-- rontend/ – Dashboard UI
+- Backend/ – FastAPI backend, database, ML models, detectors
+- Frontend/ – Dashboard UI
 - scripts/ – Build, fix, and feature scripts
 - deploy_server.py – Main server for Render
 - index.html – Main frontend for GitHub Pages
